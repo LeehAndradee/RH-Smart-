@@ -1,6 +1,12 @@
 from django.contrib import admin
-from .models import *
-
+from .models import (
+    Departamento,
+    Cargo,
+    Funcionario,
+    Evento,
+    FolhaPagamento,
+    ItemFolha
+)
 
 # ==============================
 # INLINE - ITENS DA FOLHA
@@ -22,6 +28,7 @@ class FolhaPagamentoAdmin(admin.ModelAdmin):
         'funcionario',
         'mes',
         'ano',
+        'tipo',
         'salario_base',
         'salario_bruto',
         'salario_liquido'
@@ -43,7 +50,7 @@ class FolhaPagamentoAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('📌 Dados iniciais', {
-            'fields': ('funcionario', 'mes', 'ano')
+            'fields': ('funcionario', 'mes', 'ano','tipo')
         }),
 
         # 👉 INLINE (itens) aparece automaticamente aqui
@@ -61,6 +68,7 @@ class FolhaPagamentoAdmin(admin.ModelAdmin):
             )
         }),
     )
+
 
 
 # ==============================

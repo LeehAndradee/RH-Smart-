@@ -1,5 +1,6 @@
 from django.db import models
 from decimal import Decimal
+from datetime import date
 
 
 # ==============================
@@ -60,9 +61,18 @@ class Evento(models.Model):
 # FOLHA DE PAGAMENTO
 # ==============================
 class FolhaPagamento(models.Model):
+
+    TIPOS_FOLHA = [
+        ('MENSAL', 'Mensal'),
+        ('FERIAS', 'Férias'),
+        ('DECIMO', '13º'),
+    ]
+
     funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE)
     mes = models.IntegerField()
     ano = models.IntegerField()
+
+    tipo = models.CharField(max_length=10, choices=TIPOS_FOLHA, default='MENSAL')
 
     salario_base = models.DecimalField(max_digits=10, decimal_places=2)
 
@@ -125,6 +135,16 @@ class FolhaPagamento(models.Model):
         return Decimal('0')
 
     # ==============================
+    # TEMPO DE EMPRESA (para 13º)
+    # ==============================
+    def meses_trabalhados(self):
+        hoje = date(self.ano, self.mes, 1)
+        admissao = self.funcionario.data_admissao
+
+        meses = (hoje.year - admissao.year) * 12 + (hoje.month - admissao.month)
+        return max(0, min(meses, 12))
+
+    # ==============================
     # SOMA DOS ITENS
     # ==============================
     def calcular_totais(self):
@@ -152,19 +172,39 @@ class FolhaPagamento(models.Model):
 
         self.salario_bruto = self.salario_base + proventos
 
+        # ==================
+        # FÉRIAS
+        # ==================
+        if self.tipo == 'FERIAS':
+            adicional = self.salario_base / Decimal('3')
+            self.salario_bruto += adicional
+
+        # ==================
+        # 13º PROPORCIONAL
+        # ==================
+        if self.tipo == 'DECIMO':
+            meses = self.meses_trabalhados()
+            self.salario_bruto = (self.salario_base / 12) * meses
+
+        # ==================
         # INSS
+        # ==================
         self.inss = self.calcular_inss(self.salario_bruto)
 
-        # BASE IRRF
-        base_irrf = self.salario_bruto - self.inss
-
+        # ==================
         # IRRF
+        # ==================
+        base_irrf = self.salario_bruto - self.inss
         self.irrf = max(self.calcular_irrf(base_irrf), Decimal('0'))
 
+        # ==================
         # FGTS
+        # ==================
         self.fgts = self.salario_bruto * Decimal('0.08')
 
+        # ==================
         # SALÁRIO LÍQUIDO
+        # ==================
         self.salario_liquido = (
             self.salario_bruto
             - self.inss
@@ -192,7 +232,7 @@ class FolhaPagamento(models.Model):
         ])
 
     def __str__(self):
-        return f"{self.funcionario} - {self.mes}/{self.ano}"
+        return f"{self.funcionario} - {self.mes}/{self.ano} ({self.tipo})"
 
 
 # ==============================
@@ -213,7 +253,7 @@ class ItemFolha(models.Model):
 
         # recalcula folha automaticamente
         self.folha.calcular_salario()
-        super(FolhaPagamento, self.folha).save()
+        self.folha.save()
 
     def __str__(self):
         return f"{self.evento} - {self.valor}"
