@@ -1,18 +1,23 @@
-from django.http import JsonResponse
-from .models import Funcionario
+from django.shortcuts import render, redirect
+from .models import FolhaPagamento, Funcionario
 
-def calcular_folha(request):
-    funcionario_id = request.GET.get('funcionario')
+def criar_folha(request):
+    funcionarios = Funcionario.objects.all()
 
-    if not funcionario_id:
-        return JsonResponse({'error': 'Funcionário não informado'})
+    if request.method == 'POST':
+        tipo = request.POST.get('tipo')
 
-    try:
-        funcionario = Funcionario.objects.get(id=funcionario_id)
+        folha = FolhaPagamento.objects.create(
+            funcionario_id=request.POST.get('funcionario'),
+            mes=request.POST.get('mes'),
+            ano=request.POST.get('ano'),
+            tipo=tipo
+        )
 
-        return JsonResponse({
-            'salario_base': float(funcionario.salario_base)
-        })
+        folha.save()
 
-    except Funcionario.DoesNotExist:
-        return JsonResponse({'error': 'Funcionário não encontrado'})
+        return redirect('criar_folha')
+
+    return render(request, 'folha/criar_folha.html', {
+        'funcionarios': funcionarios
+    })

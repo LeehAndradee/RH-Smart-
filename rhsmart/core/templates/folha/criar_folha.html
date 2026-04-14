@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerar Folha</title>
+
+    <!-- Bootstrap (opcional, mas deixa bonito) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mt-5">
+
+    <h2 class="mb-4">💰 Gerar Folha de Pagamento</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <!-- ========================= -->
+        <!-- FUNCIONÁRIO -->
+        <!-- ========================= -->
+        <div class="mb-3">
+            <label class="form-label">Funcionário</label>
+            <select name="funcionario" class="form-control" required>
+                <option value="">Selecione...</option>
+                {% for f in funcionarios %}
+                    <option value="{{ f.id }}">{{ f.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- ========================= -->
+        <!-- MÊS E ANO -->
+        <!-- ========================= -->
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label>Mês</label>
+                <input type="number" name="mes" class="form-control" required>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label>Ano</label>
+                <input type="number" name="ano" class="form-control" required>
+            </div>
+        </div>
+
+        <!-- ========================= -->
+        <!-- TIPO DE FOLHA -->
+        <!-- ========================= -->
+        <div class="mb-3">
+            <label>Tipo de Folha</label>
+            <select name="tipo" id="tipo" class="form-control">
+                <option value="MENSAL">Mensal</option>
+                <option value="FERIAS">Férias</option>
+                <option value="DECIMO">13º</option>
+            </select>
+        </div>
+
+        <!-- ========================= -->
+        <!-- CAMPOS DINÂMICOS -->
+        <!-- ========================= -->
+        <div id="campo-ferias" style="display:none;">
+            <div class="mb-3">
+                <label>Adicional de Férias (1/3)</label>
+                <input type="number" step="0.01" name="adicional_ferias" class="form-control">
+            </div>
+        </div>
+
+        <div id="campo-decimo" style="display:none;">
+            <div class="mb-3">
+                <label>Parcela do 13º</label>
+                <input type="number" step="0.01" name="parcela_decimo" class="form-control">
+            </div>
+        </div>
+
+        <!-- ========================= -->
+        <!-- EVENTOS -->
+        <!-- ========================= -->
+        <h4 class="mt-4">📋 Eventos</h4>
+
+        <div id="eventos-container">
+
+            <div class="row mb-2 evento-item">
+                <div class="col-md-5">
+                    <select name="evento[]" class="form-control">
+                        <option value="">Selecione evento</option>
+                        {% for e in eventos %}
+                            <option value="{{ e.id }}">
+                                {{ e.nome }} ({{ e.tipo }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-5">
+                    <input type="number" step="0.01" name="valor[]" class="form-control" placeholder="Valor">
+                </div>
+
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger remover-evento">X</button>
+                </div>
+            </div>
+
+        </div>
+
+        <button type="button" id="add-evento" class="btn btn-secondary mb-3">
+            + Adicionar Evento
+        </button>
+
+        <!-- ========================= -->
+        <!-- BOTÃO -->
+        <!-- ========================= -->
+        <div>
+            <button type="submit" class="btn btn-success">
+                Gerar Folha
+            </button>
+        </div>
+
+    </form>
+
+</div>
+
+<!-- ========================= -->
+<!-- JAVASCRIPT -->
+<!-- ========================= -->
+<script>
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    // =========================
+    // TIPO DE FOLHA (DINÂMICO)
+    // =========================
+    const tipo = document.getElementById('tipo');
+    const campoFerias = document.getElementById('campo-ferias');
+    const campoDecimo = document.getElementById('campo-decimo');
+
+    function atualizarCampos() {
+        campoFerias.style.display = 'none';
+        campoDecimo.style.display = 'none';
+
+        if (tipo.value === 'FERIAS') {
+            campoFerias.style.display = 'block';
+        }
+
+        if (tipo.value === 'DECIMO') {
+            campoDecimo.style.display = 'block';
+        }
+    }
+
+    tipo.addEventListener('change', atualizarCampos);
+    atualizarCampos();
+
+
+    // =========================
+    // ADICIONAR EVENTO
+    // =========================
+    const addEventoBtn = document.getElementById('add-evento');
+    const container = document.getElementById('eventos-container');
+
+    addEventoBtn.addEventListener('click', function () {
+
+        const novoEvento = document.querySelector('.evento-item').cloneNode(true);
+
+        novoEvento.querySelector('select').value = '';
+        novoEvento.querySelector('input').value = '';
+
+        container.appendChild(novoEvento);
+    });
+
+
+    // =========================
+    // REMOVER EVENTO
+    // =========================
+    document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('remover-evento')) {
+
+            const itens = document.querySelectorAll('.evento-item');
+
+            if (itens.length > 1) {
+                e.target.closest('.evento-item').remove();
+            }
+        }
+    });
+
+});
+</script>
+
+</body>
+</html>

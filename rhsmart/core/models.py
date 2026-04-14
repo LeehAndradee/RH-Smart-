@@ -257,3 +257,28 @@ class ItemFolha(models.Model):
 
     def __str__(self):
         return f"{self.evento} - {self.valor}"
+    
+
+# ==============================
+# PROXY MODELS (TIPOS DE FOLHA)
+# ==============================
+
+class FolhaMensal(FolhaPagamento):
+    class Meta:
+        proxy = True
+        verbose_name = "Folha Mensal"
+        verbose_name_plural = "Folhas Mensais"
+
+
+class FolhaFerias(FolhaPagamento):
+    class Meta:
+        proxy = True
+        verbose_name = "Folha de Férias"
+        verbose_name_plural = "Folhas de Férias"
+
+
+class FolhaDecimoTerceiro(FolhaPagamento):
+    class Meta:
+        proxy = True
+        verbose_name = "Folha de 13º"
+        verbose_name_plural = "Folhas de 13º"

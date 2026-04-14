@@ -4,8 +4,10 @@ from .models import (
     Cargo,
     Funcionario,
     Evento,
-    FolhaPagamento,
-    ItemFolha
+    ItemFolha,
+    FolhaMensal,
+    FolhaFerias,
+    FolhaDecimoTerceiro
 )
 
 # ==============================
@@ -14,28 +16,25 @@ from .models import (
 class ItemFolhaInline(admin.TabularInline):
     model = ItemFolha
     extra = 1
-    autocomplete_fields = ['evento']  # 🔥 profissional
+    autocomplete_fields = ['evento']
 
 
 # ==============================
-# FOLHA DE PAGAMENTO
+# BASE ADMIN (REUTILIZÁVEL)
 # ==============================
-@admin.register(FolhaPagamento)
-class FolhaPagamentoAdmin(admin.ModelAdmin):
+class BaseFolhaAdmin(admin.ModelAdmin):
     inlines = [ItemFolhaInline]
 
     list_display = (
         'funcionario',
         'mes',
         'ano',
-        'tipo',
         'salario_base',
-        'salario_bruto',
         'salario_liquido'
     )
 
-    list_filter = ('mes', 'ano')
     search_fields = ('funcionario__nome',)
+    list_filter = ('mes', 'ano')
 
     readonly_fields = (
         'salario_base',
@@ -43,18 +42,17 @@ class FolhaPagamentoAdmin(admin.ModelAdmin):
         'total_proventos',
         'total_descontos',
         'inss',
-        'fgts',
         'irrf',
+        'fgts',
         'salario_liquido'
     )
 
+    exclude = ('tipo',)  # 👈 não aparece no form
+
     fieldsets = (
         ('📌 Dados iniciais', {
-            'fields': ('funcionario', 'mes', 'ano','tipo')
+            'fields': ('funcionario', 'mes', 'ano')
         }),
-
-        # 👉 INLINE (itens) aparece automaticamente aqui
-
         ('💰 Cálculos automáticos', {
             'fields': (
                 'salario_base',
@@ -62,13 +60,54 @@ class FolhaPagamentoAdmin(admin.ModelAdmin):
                 'total_proventos',
                 'total_descontos',
                 'inss',
-                'fgts',
                 'irrf',
+                'fgts',
                 'salario_liquido'
             )
         }),
     )
 
+
+# ==============================
+# FOLHA MENSAL
+# ==============================
+@admin.register(FolhaMensal)
+class FolhaMensalAdmin(BaseFolhaAdmin):
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(tipo='MENSAL')
+
+    def save_model(self, request, obj, form, change):
+        obj.tipo = 'MENSAL'
+        super().save_model(request, obj, form, change)
+
+
+# ==============================
+# FOLHA DE FÉRIAS
+# ==============================
+@admin.register(FolhaFerias)
+class FolhaFeriasAdmin(BaseFolhaAdmin):
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(tipo='FERIAS')
+
+    def save_model(self, request, obj, form, change):
+        obj.tipo = 'FERIAS'
+        super().save_model(request, obj, form, change)
+
+
+# ==============================
+# FOLHA DE 13º
+# ==============================
+@admin.register(FolhaDecimoTerceiro)
+class FolhaDecimoTerceiroAdmin(BaseFolhaAdmin):
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(tipo='DECIMO')
+
+    def save_model(self, request, obj, form, change):
+        obj.tipo = 'DECIMO'
+        super().save_model(request, obj, form, change)
 
 
 # ==============================
