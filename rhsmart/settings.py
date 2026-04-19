@@ -75,11 +75,14 @@ WSGI_APPLICATION = 'rhsmart.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'rhsmart',
+        'USER': 'postgres',      # Seu usuário do Postgres
+        'PASSWORD': 'Elieusa123!', # Sua senha do Postgres
+        'HOST': '127.0.0.1', # Use o IP em vez de 'localhost' para evitar buscas de DNS do Windows
+        'PORT': '5432',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
