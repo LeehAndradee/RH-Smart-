@@ -1,6 +1,12 @@
 from django.urls import path
-from .views import criar_folha
+from .views import (
+    funcionarios_view,
+    cargos_view,
+    departamentos_view
+)
 
 urlpatterns = [
-    path('folha/', criar_folha, name='criar_folha'),
+    path('funcionarios/', funcionarios_view),
+    path('cargos/', cargos_view),
+    path('departamentos/', departamentos_view),
 ]

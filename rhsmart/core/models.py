@@ -1,6 +1,37 @@
 from django.db import models
 from decimal import Decimal
 from datetime import date
+from django.core.exceptions import ValidationError
+from django.utils.timezone import now
+import re
+
+
+
+# ==============================
+# VALIDAÇÕES
+# ==============================
+def validar_cpf(cpf):
+    cpf = re.sub(r'\D', '', cpf)
+
+    if len(cpf) != 11 or cpf == cpf[0] * 11:
+        raise ValidationError("CPF inválido")
+
+    # Validação do CPF
+    for i in range(9, 11):
+        valor = sum((int(cpf[num]) * ((i+1) - num) for num in range(0, i)))
+        digito = ((valor * 10) % 11) % 10
+        if digito != int(cpf[i]):
+            raise ValidationError("CPF inválido")
+
+
+def validar_idade(data_nascimento):
+    hoje = date.today()
+    idade = hoje.year - data_nascimento.year - (
+        (hoje.month, hoje.day) < (data_nascimento.month, data_nascimento.day)
+    )
+
+    if idade < 16:
+        raise ValidationError("Funcionário deve ter pelo menos 16 anos")
 
 
 # ==============================
@@ -8,6 +39,9 @@ from datetime import date
 # ==============================
 class Departamento(models.Model):
     nome = models.CharField(max_length=100)
+    descricao = models.TextField(blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.nome
@@ -19,6 +53,10 @@ class Departamento(models.Model):
 class Cargo(models.Model):
     nome = models.CharField(max_length=100)
     departamento = models.ForeignKey(Departamento, on_delete=models.CASCADE)
+    nivel = models.CharField(max_length=50, blank=True)
+    carga_horaria = models.IntegerField(default=40)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.nome
@@ -29,10 +67,50 @@ class Cargo(models.Model):
 # ==============================
 class Funcionario(models.Model):
     nome = models.CharField(max_length=100)
-    cpf = models.CharField(max_length=14)
+
+    cpf = models.CharField(
+        max_length=14,
+        unique=True,
+        validators=[validar_cpf]
+    )
+
+    data_nascimento = models.DateField(
+        validators=[validar_idade],
+        null=True,
+        blank=True
+    )
+
+    dependentes = models.IntegerField(default=0)
+
+    escolaridade = models.CharField(
+        max_length=50,
+        choices=[
+            ('FUNDAMENTAL', 'Fundamental'),
+            ('MEDIO', 'Médio'),
+            ('SUPERIOR', 'Superior'),
+            ('POS', 'Pós-graduação'),
+        ],
+        default='MEDIO'
+    )
+
+    estado_civil = models.CharField(
+    max_length=20,
+    choices=[
+        ('SOLTEIRO', 'Solteiro'),
+        ('CASADO', 'Casado'),
+        ('DIVORCIADO', 'Divorciado'),
+    ],
+    default='SOLTEIRO'
+)
+
     cargo = models.ForeignKey(Cargo, on_delete=models.CASCADE)
+
     salario_base = models.DecimalField(max_digits=10, decimal_places=2)
+
     data_admissao = models.DateField()
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.nome
@@ -62,17 +140,17 @@ class Evento(models.Model):
 # ==============================
 class FolhaPagamento(models.Model):
 
-    TIPOS_FOLHA = [
+    TIPOS = [
         ('MENSAL', 'Mensal'),
         ('FERIAS', 'Férias'),
         ('DECIMO', '13º'),
     ]
 
     funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE)
+    tipo = models.CharField(max_length=10, choices=TIPOS)
+
     mes = models.IntegerField()
     ano = models.IntegerField()
-
-    tipo = models.CharField(max_length=10, choices=TIPOS_FOLHA, default='MENSAL')
 
     salario_base = models.DecimalField(max_digits=10, decimal_places=2)
 
@@ -86,8 +164,23 @@ class FolhaPagamento(models.Model):
 
     salario_liquido = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
+    criado_em = models.DateTimeField(auto_now_add=True)
+    fechada = models.BooleanField(default=False)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    
     # ==============================
-    # INSS PROGRESSIVO
+    # MESES TRABALHADOS
+    # ==============================
+    def meses_trabalhados(self):
+        hoje = date(self.ano, self.mes, 1)
+        admissao = self.funcionario.data_admissao
+
+        meses = (hoje.year - admissao.year) * 12 + (hoje.month - admissao.month)
+        return max(meses, 0)
+
+    # ==============================
+    # INSS
     # ==============================
     def calcular_inss(self, salario):
         faixas = [
@@ -117,7 +210,7 @@ class FolhaPagamento(models.Model):
         return inss_total
 
     # ==============================
-    # IRRF PROGRESSIVO
+    # IRRF
     # ==============================
     def calcular_irrf(self, base):
         faixas = [
@@ -135,104 +228,36 @@ class FolhaPagamento(models.Model):
         return Decimal('0')
 
     # ==============================
-    # TEMPO DE EMPRESA (para 13º)
-    # ==============================
-    def meses_trabalhados(self):
-        hoje = date(self.ano, self.mes, 1)
-        admissao = self.funcionario.data_admissao
-
-        meses = (hoje.year - admissao.year) * 12 + (hoje.month - admissao.month)
-        return max(0, min(meses, 12))
-
-    # ==============================
-    # SOMA DOS ITENS
-    # ==============================
-    def calcular_totais(self):
-        itens = self.itemfolha_set.all()
-
-        proventos = Decimal('0')
-        descontos = Decimal('0')
-
-        for item in itens:
-            if item.evento.tipo == 'PROVENTO':
-                proventos += item.valor
-            else:
-                descontos += item.valor
-
-        return proventos, descontos
-
-    # ==============================
-    # CÁLCULO COMPLETO
+    # CÁLCULO PRINCIPAL
     # ==============================
     def calcular_salario(self):
-        proventos, descontos = self.calcular_totais()
+        self.salario_bruto = self.salario_base
 
-        self.total_proventos = proventos
-        self.total_descontos = descontos
-
-        self.salario_bruto = self.salario_base + proventos
-
-        # ==================
-        # FÉRIAS
-        # ==================
         if self.tipo == 'FERIAS':
-            adicional = self.salario_base / Decimal('3')
-            self.salario_bruto += adicional
+            self.salario_bruto += self.salario_base / 3
 
-        # ==================
-        # 13º PROPORCIONAL
-        # ==================
-        if self.tipo == 'DECIMO':
+        elif self.tipo == 'DECIMO':
             meses = self.meses_trabalhados()
             self.salario_bruto = (self.salario_base / 12) * meses
 
-        # ==================
-        # INSS
-        # ==================
         self.inss = self.calcular_inss(self.salario_bruto)
 
-        # ==================
-        # IRRF
-        # ==================
-        base_irrf = self.salario_bruto - self.inss
+        base_irrf = self.salario_bruto - self.inss - (self.funcionario.dependentes * Decimal('189.59'))
         self.irrf = max(self.calcular_irrf(base_irrf), Decimal('0'))
 
-        # ==================
-        # FGTS
-        # ==================
         self.fgts = self.salario_bruto * Decimal('0.08')
 
-        # ==================
-        # SALÁRIO LÍQUIDO
-        # ==================
-        self.salario_liquido = (
-            self.salario_bruto
-            - self.inss
-            - self.irrf
-            - descontos
-        )
+        self.salario_liquido = self.salario_bruto - self.inss - self.irrf
 
     def save(self, *args, **kwargs):
         if self.funcionario:
             self.salario_base = self.funcionario.salario_base
 
+        self.calcular_salario()
         super().save(*args, **kwargs)
 
-        self.calcular_salario()
-
-        super().save(update_fields=[
-            'salario_base',
-            'salario_bruto',
-            'total_proventos',
-            'total_descontos',
-            'inss',
-            'irrf',
-            'fgts',
-            'salario_liquido'
-        ])
-
     def __str__(self):
-        return f"{self.funcionario} - {self.mes}/{self.ano} ({self.tipo})"
+        return f"{self.funcionario} - {self.tipo} - {self.mes}/{self.ano}"
 
 
 # ==============================
@@ -251,34 +276,8 @@ class ItemFolha(models.Model):
 
         super().save(*args, **kwargs)
 
-        # recalcula folha automaticamente
         self.folha.calcular_salario()
         self.folha.save()
 
     def __str__(self):
         return f"{self.evento} - {self.valor}"
-    
-
-# ==============================
-# PROXY MODELS (TIPOS DE FOLHA)
-# ==============================
-
-class FolhaMensal(FolhaPagamento):
-    class Meta:
-        proxy = True
-        verbose_name = "Folha Mensal"
-        verbose_name_plural = "Folhas Mensais"
-
-
-class FolhaFerias(FolhaPagamento):
-    class Meta:
-        proxy = True
-        verbose_name = "Folha de Férias"
-        verbose_name_plural = "Folhas de Férias"
-
-
-class FolhaDecimoTerceiro(FolhaPagamento):
-    class Meta:
-        proxy = True
-        verbose_name = "Folha de 13º"
-        verbose_name_plural = "Folhas de 13º"

@@ -1,0 +1,35 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+
+<h2 class="mb-4">👤 Funcionários</h2>
+
+<a href="/admin/core/funcionario/add/" class="btn btn-success mb-3">
+    ➕ Novo Funcionário
+</a>
+
+<table class="table table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Nome</th>
+            <th>CPF</th>
+            <th>Cargo</th>
+            <th>Salário</th>
+            <th>Admissão</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for f in funcionarios %}
+        <tr>
+            <td>{{ f.nome }}</td>
+            <td>{{ f.cpf }}</td>
+            <td>{{ f.cargo.nome }}</td>
+            <td>R$ {{ f.salario_base }}</td>
+            <td>{{ f.data_admissao }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

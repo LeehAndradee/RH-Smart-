@@ -4,10 +4,8 @@ from .models import (
     Cargo,
     Funcionario,
     Evento,
-    ItemFolha,
-    FolhaMensal,
-    FolhaFerias,
-    FolhaDecimoTerceiro
+    FolhaPagamento,
+    ItemFolha
 )
 
 # ==============================
@@ -20,94 +18,44 @@ class ItemFolhaInline(admin.TabularInline):
 
 
 # ==============================
-# BASE ADMIN (REUTILIZÁVEL)
+# DEPARTAMENTO
 # ==============================
-class BaseFolhaAdmin(admin.ModelAdmin):
-    inlines = [ItemFolhaInline]
+@admin.register(Departamento)
+class DepartamentoAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'descricao', 'criado_em')
+    search_fields = ('nome',)
 
-    list_display = (
-        'funcionario',
-        'mes',
-        'ano',
-        'salario_base',
-        'salario_liquido'
-    )
-
-    search_fields = ('funcionario__nome',)
-    list_filter = ('mes', 'ano')
-
-    readonly_fields = (
-        'salario_base',
-        'salario_bruto',
-        'total_proventos',
-        'total_descontos',
-        'inss',
-        'irrf',
-        'fgts',
-        'salario_liquido'
-    )
-
-    exclude = ('tipo',)  # 👈 não aparece no form
+    readonly_fields = ('criado_em', 'atualizado_em')
 
     fieldsets = (
-        ('📌 Dados iniciais', {
-            'fields': ('funcionario', 'mes', 'ano')
+        ('📌 Dados', {
+            'fields': ('nome', 'descricao')
         }),
-        ('💰 Cálculos automáticos', {
-            'fields': (
-                'salario_base',
-                'salario_bruto',
-                'total_proventos',
-                'total_descontos',
-                'inss',
-                'irrf',
-                'fgts',
-                'salario_liquido'
-            )
+        ('🕒 Auditoria', {
+            'fields': ('criado_em', 'atualizado_em')
         }),
     )
 
 
 # ==============================
-# FOLHA MENSAL
+# CARGO
 # ==============================
-@admin.register(FolhaMensal)
-class FolhaMensalAdmin(BaseFolhaAdmin):
+@admin.register(Cargo)
+class CargoAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'departamento', 'nivel', 'carga_horaria')
+    list_filter = ('departamento', 'nivel')
+    search_fields = ('nome',)
 
-    def get_queryset(self, request):
-        return super().get_queryset(request).filter(tipo='MENSAL')
+    readonly_fields = ('criado_em', 'atualizado_em')
 
-    def save_model(self, request, obj, form, change):
-        obj.tipo = 'MENSAL'
-        super().save_model(request, obj, form, change)
-
-
-# ==============================
-# FOLHA DE FÉRIAS
-# ==============================
-@admin.register(FolhaFerias)
-class FolhaFeriasAdmin(BaseFolhaAdmin):
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).filter(tipo='FERIAS')
-
-    def save_model(self, request, obj, form, change):
-        obj.tipo = 'FERIAS'
-        super().save_model(request, obj, form, change)
-
-
-# ==============================
-# FOLHA DE 13º
-# ==============================
-@admin.register(FolhaDecimoTerceiro)
-class FolhaDecimoTerceiroAdmin(BaseFolhaAdmin):
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).filter(tipo='DECIMO')
-
-    def save_model(self, request, obj, form, change):
-        obj.tipo = 'DECIMO'
-        super().save_model(request, obj, form, change)
+    fieldsets = (
+        ('📌 Dados', {
+            'fields': ('nome', 'departamento', 'nivel', 'carga_horaria')
+        }),
+        ('🕒 Auditoria', {
+            'fields': ('criado_em', 'atualizado_em')
+        }),
+    )
 
 
 # ==============================
@@ -123,27 +71,33 @@ class FuncionarioAdmin(admin.ModelAdmin):
         'data_admissao'
     )
 
-    list_filter = ('cargo',)
+    list_filter = ('cargo', 'estado_civil', 'escolaridade')
     search_fields = ('nome', 'cpf')
 
+    readonly_fields = ('criado_em', 'atualizado_em')
 
-# ==============================
-# CARGO
-# ==============================
-@admin.register(Cargo)
-class CargoAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'departamento')
-    list_filter = ('departamento',)
-    search_fields = ('nome',)
-
-
-# ==============================
-# DEPARTAMENTO
-# ==============================
-@admin.register(Departamento)
-class DepartamentoAdmin(admin.ModelAdmin):
-    list_display = ('nome',)
-    search_fields = ('nome',)
+    fieldsets = (
+        ('📌 Dados pessoais', {
+            'fields': (
+                'nome',
+                'cpf',
+                'data_nascimento',
+                'estado_civil',
+                'dependentes',
+                'escolaridade'
+            )
+        }),
+        ('💼 Dados profissionais', {
+            'fields': (
+                'cargo',
+                'salario_base',
+                'data_admissao'
+            )
+        }),
+        ('🕒 Auditoria', {
+            'fields': ('criado_em', 'atualizado_em')
+        }),
+    )
 
 
 # ==============================
@@ -151,22 +105,73 @@ class DepartamentoAdmin(admin.ModelAdmin):
 # ==============================
 @admin.register(Evento)
 class EventoAdmin(admin.ModelAdmin):
-    list_display = (
-        'nome',
-        'tipo',
-        'percentual',
-        'valor_fixo'
-    )
-
+    list_display = ('nome', 'tipo', 'percentual', 'valor_fixo')
     list_filter = ('tipo',)
     search_fields = ('nome',)
 
 
 # ==============================
-# ITEM DA FOLHA (OPCIONAL)
+# FOLHA DE PAGAMENTO
+# ==============================
+@admin.register(FolhaPagamento)
+class FolhaPagamentoAdmin(admin.ModelAdmin):
+    inlines = [ItemFolhaInline]
+
+    list_display = (
+        'funcionario',
+        'tipo',
+        'mes',
+        'ano',
+        'salario_bruto',
+        'salario_liquido',
+        'fechada'
+    )
+
+    list_filter = ('tipo', 'mes', 'ano', 'fechada')
+    search_fields = ('funcionario__nome',)
+
+    readonly_fields = (
+        'salario_base',
+        'salario_bruto',
+        'total_proventos',
+        'total_descontos',
+        'inss',
+        'irrf',
+        'fgts',
+        'salario_liquido',
+        'criado_em',
+        'atualizado_em'
+    )
+
+    fieldsets = (
+        ('📌 Dados', {
+            'fields': ('funcionario', 'tipo', 'mes', 'ano', 'fechada')
+        }),
+
+        ('💰 Cálculos', {
+            'fields': (
+                'salario_base',
+                'salario_bruto',
+                'total_proventos',
+                'total_descontos',
+                'inss',
+                'irrf',
+                'fgts',
+                'salario_liquido'
+            )
+        }),
+
+        ('🕒 Auditoria', {
+            'fields': ('criado_em', 'atualizado_em')
+        }),
+    )
+
+
+# ==============================
+# ITEM DA FOLHA (opcional)
 # ==============================
 @admin.register(ItemFolha)
 class ItemFolhaAdmin(admin.ModelAdmin):
     list_display = ('folha', 'evento', 'valor')
-    search_fields = ('evento__nome',)
     list_filter = ('evento__tipo',)
+    search_fields = ('evento__nome',)

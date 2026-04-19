@@ -1,0 +1,32 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+
+<h2 class="mb-4">📊 Dashboard</h2>
+
+<div class="row">
+
+    <div class="col-md-4">
+        <div class="card card-dashboard bg-primary p-3">
+            <h5>Funcionários</h5>
+            <h2>{{ total_funcionarios }}</h2>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-dashboard bg-success p-3">
+            <h5>Folhas Fechadas</h5>
+            <h2>{{ folhas_fechadas }}</h2>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-dashboard bg-warning p-3">
+            <h5>Folhas Pendentes</h5>
+            <h2>{{ folhas_pendentes }}</h2>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

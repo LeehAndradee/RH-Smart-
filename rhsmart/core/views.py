@@ -1,23 +1,23 @@
-from django.shortcuts import render, redirect
-from .models import FolhaPagamento, Funcionario
+from django.shortcuts import render
+from .models import Funcionario, Cargo, Departamento
 
-def criar_folha(request):
+
+def funcionarios_view(request):
     funcionarios = Funcionario.objects.all()
-
-    if request.method == 'POST':
-        tipo = request.POST.get('tipo')
-
-        folha = FolhaPagamento.objects.create(
-            funcionario_id=request.POST.get('funcionario'),
-            mes=request.POST.get('mes'),
-            ano=request.POST.get('ano'),
-            tipo=tipo
-        )
-
-        folha.save()
-
-        return redirect('criar_folha')
-
-    return render(request, 'folha/criar_folha.html', {
+    return render(request, 'core/funcionarios.html', {
         'funcionarios': funcionarios
+    })
+
+
+def cargos_view(request):
+    cargos = Cargo.objects.all()
+    return render(request, 'core/cargos.html', {
+        'cargos': cargos
+    })
+
+
+def departamentos_view(request):
+    departamentos = Departamento.objects.all()
+    return render(request, 'core/departamentos.html', {
+        'departamentos': departamentos
     })

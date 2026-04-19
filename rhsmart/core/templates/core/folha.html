@@ -1,0 +1,111 @@
+
+{% extends 'core/base.html' %}
+
+{% block content %}
+<h1>Minha página</h1>
+{% endblock %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Folha de Pagamento</title>
+
+    {% load static %}
+    <script src="{% static 'core/js/folha.js' %}" defer></script>
+
+    <style>
+        body {
+            font-family: Arial;
+            margin: 30px;
+        }
+
+        .box {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        input, select {
+            padding: 5px;
+            margin: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>💼 Gerar Folha</h1>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <div class="box">
+
+        <label>Funcionário:</label>
+        <select id="funcionario" name="funcionario">
+            <option value="">Selecione</option>
+            {% for f in funcionarios %}
+                <option value="{{ f.id }}" data-salario="{{ f.salario_base }}">
+                    {{ f.nome }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <br>
+
+        <label>Tipo:</label>
+        <select id="tipo" name="tipo">
+            <option value="MENSAL">Mensal</option>
+            <option value="FERIAS">Férias</option>
+            <option value="DECIMO">13º</option>
+        </select>
+
+        <br>
+
+        <label>Mês:</label>
+        <input type="number" id="mes" name="mes">
+
+        <label>Ano:</label>
+        <input type="number" id="ano" name="ano">
+
+        <br><br>
+
+        <label>Salário Base:</label>
+        <input type="text" id="salario_base" readonly>
+
+    </div>
+
+    <button type="submit">💾 Gerar Folha</button>
+</form>
+
+<!-- EVENTOS (frontend apenas por enquanto) -->
+<div class="box">
+    <h3>Eventos</h3>
+
+    <select id="evento">
+        {% for e in eventos %}
+            <option value="{{ e.id }}" data-tipo="{{ e.tipo }}" data-valor="{{ e.valor_fixo|default:0 }}">
+                {{ e.nome }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <input type="number" id="valor_evento" placeholder="Valor">
+
+    <button onclick="adicionarEvento()">Adicionar</button>
+
+    <ul id="lista_eventos"></ul>
+</div>
+
+<div class="box">
+    <h3>Resumo</h3>
+
+    <p>Bruto: <span id="bruto">0</span></p>
+    <p>INSS: <span id="inss">0</span></p>
+    <p>IRRF: <span id="irrf">0</span></p>
+    <p>Líquido: <span id="liquido">0</span></p>
+</div>
+
+</body>
+</html>

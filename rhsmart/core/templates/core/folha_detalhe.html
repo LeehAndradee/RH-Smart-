@@ -1,0 +1,52 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+
+<h2>📄 Folha de Pagamento</h2>
+
+<div class="card p-4 mb-3">
+    <p><strong>Funcionário:</strong> {{ folha.funcionario.nome }}</p>
+    <p><strong>Tipo:</strong> {{ folha.tipo }}</p>
+    <p><strong>Período:</strong> {{ folha.mes }}/{{ folha.ano }}</p>
+</div>
+
+<div class="card p-4 mb-3">
+    <h5>Eventos</h5>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Evento</th>
+                <th>Valor</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in itens %}
+            <tr>
+                <td>{{ item.evento.nome }}</td>
+                <td>R$ {{ item.valor }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card p-4 mb-3">
+    <h5>Resumo</h5>
+
+    <p>Bruto: R$ {{ folha.salario_bruto }}</p>
+    <p>INSS: R$ {{ folha.inss }}</p>
+    <p>IRRF: R$ {{ folha.irrf }}</p>
+    <p>FGTS: R$ {{ folha.fgts }}</p>
+    <h4>Líquido: R$ {{ folha.salario_liquido }}</h4>
+</div>
+
+{% if not folha.fechada %}
+    <a href="/folha/{{ folha.id }}/fechar/" class="btn btn-success">
+        ✅ Fechar Folha
+    </a>
+{% else %}
+    <span class="badge bg-success">Folha Fechada</span>
+{% endif %}
+
+{% endblock %}
