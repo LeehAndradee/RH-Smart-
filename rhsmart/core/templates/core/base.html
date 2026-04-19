@@ -9,59 +9,63 @@
 
     <style>
         body {
-            overflow-x: hidden;
+            margin: 0;
         }
 
+.content {
+    margin-left: 260px;
+    padding: 30px;
+    background: #f3f4f6;
+    min-height: 100vh;
+}
         .sidebar {
-            height: 100vh;
             width: 250px;
+            height: 100vh;
+            background: #1f2937;
+            color: white;
             position: fixed;
-            background: #1e293b;
-            color: white;
-        }
-
-        .sidebar a {
-            color: #cbd5f5;
-            display: block;
-            padding: 12px;
-            text-decoration: none;
-        }
-
-        .sidebar a:hover {
-            background: #334155;
-            color: white;
-        }
-
-        .content {
-            margin-left: 250px;
             padding: 20px;
         }
 
-        .card-dashboard {
-            border: none;
-            border-radius: 15px;
+        .sidebar h4 {
+            margin-bottom: 30px;
+        }
+
+        .sidebar a {
+            display: block;
             color: white;
+            text-decoration: none;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .sidebar a:hover {
+            background: #374151;
+        }
+
+        .content {
+            margin-left: 260px;
+            padding: 20px;
         }
     </style>
 </head>
 
 <body>
 
-<!-- MENU LATERAL -->
 <div class="sidebar">
-    <h4 class="text-center mt-3">💼 RH Smart</h4>
+    <h4>💼 RH Smart</h4>
 
     <a href="/">🏠 Dashboard</a>
-    <a href="/folhas/">📄 Folhas</a>
-    <a href="/folha/">➕ Gerar Folha</a>
-    <a href="/admin/core/funcionario/">👤 Funcionários</a>
-    <a href="/admin/core/cargo/">💼 Cargos</a>
-    <a href="/admin/core/departamento/">🏢 Departamentos</a>
+    <a href="/funcionarios/">👤 Funcionários</a>
+    <a href="/cargos/">📌 Cargos</a>
+    <a href="/departamentos/">🏢 Departamentos</a>
+    <a href="/folha/">💰 Folha de Pagamento</a>
 </div>
 
-<!-- CONTEÚDO -->
 <div class="content">
-    {% block content %}{% endblock %}
+    {% block content %}
+    {% endblock %}
 </div>
 
 </body>

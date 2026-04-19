@@ -4,9 +4,7 @@
 
 <h2 class="mb-4">🏢 Departamentos</h2>
 
-<a href="/admin/core/departamento/add/" class="btn btn-success mb-3">
-    ➕ Novo Departamento
-</a>
+<a href="/departamentos/novo/" class="btn btn-success">+ Novo Departamento</a>
 
 <table class="table table-hover">
     <thead class="table-dark">
@@ -24,6 +22,15 @@
             <td>{{ d.descricao }}</td>
             <td>{{ d.criado_em }}</td>
         </tr>
+        <td>
+            <a href="editar/{{ d.id }}/" class="btn btn-warning btn-sm">✏️ Editar</a>
+
+            <a href="excluir/{{ d.id }}/"
+            class="btn btn-danger btn-sm"
+            onclick="return confirm('Tem certeza que deseja excluir?')">
+            🗑️ Excluir
+            </a>
+        </td>
         {% endfor %}
     </tbody>
 </table>

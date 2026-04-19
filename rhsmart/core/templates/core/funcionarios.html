@@ -4,9 +4,7 @@
 
 <h2 class="mb-4">👤 Funcionários</h2>
 
-<a href="/admin/core/funcionario/add/" class="btn btn-success mb-3">
-    ➕ Novo Funcionário
-</a>
+<a href="/funcionarios/novo/" class="btn btn-success">+ Novo Funcionário</a>
 
 <table class="table table-hover">
     <thead class="table-dark">
@@ -28,6 +26,15 @@
             <td>R$ {{ f.salario_base }}</td>
             <td>{{ f.data_admissao }}</td>
         </tr>
+        <td>
+            <a href="editar/{{ f.id }}/" class="btn btn-warning btn-sm">✏️ Editar</a>
+
+            <a href="excluir/{{ f.id }}/"
+            class="btn btn-danger btn-sm"
+            onclick="return confirm('Tem certeza que deseja excluir?')">
+            🗑️ Excluir
+            </a>
+        </td>
         {% endfor %}
     </tbody>
 </table>

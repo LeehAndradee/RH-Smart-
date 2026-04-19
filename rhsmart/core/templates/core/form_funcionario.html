@@ -1,0 +1,35 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<h2>{% if funcionario %}Editar{% else %}Novo{% endif %} Funcionário</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    <label>Nome:</label><br>
+    <input type="text" name="nome" value="{{ funcionario.nome|default:'' }}"><br><br>
+
+    <label>CPF:</label><br>
+    <input type="text" name="cpf" value="{{ funcionario.cpf|default:'' }}"><br><br>
+
+    <label>Salário:</label><br>
+    <input type="number" step="0.01" name="salario" value="{{ funcionario.salario_base|default:'' }}"><br><br>
+
+    <label>Data de Admissão:</label><br>
+    <input type="date" name="admissao" value="{{ funcionario.data_admissao|date:'Y-m-d' }}"><br><br>
+
+    <label>Cargo:</label><br>
+    <select name="cargo">
+        {% for c in cargos %}
+            <option value="{{ c.id }}"
+                {% if funcionario.cargo.id == c.id %}selected{% endif %}>
+                {{ c.nome }}
+            </option>
+        {% endfor %}
+    </select><br><br>
+
+    <button type="submit">Salvar</button>
+</form>
+
+<a href="/funcionarios/">Voltar</a>
+{% endblock %}

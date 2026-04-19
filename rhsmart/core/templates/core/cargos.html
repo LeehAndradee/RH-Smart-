@@ -4,9 +4,7 @@
 
 <h2 class="mb-4">💼 Cargos</h2>
 
-<a href="/admin/core/cargo/add/" class="btn btn-success mb-3">
-    ➕ Novo Cargo
-</a>
+<a href="/cargos/novo/" class="btn btn-success">+ Novo Cargo</a>
 
 <table class="table table-hover">
     <thead class="table-dark">
@@ -26,6 +24,15 @@
             <td>{{ c.nivel }}</td>
             <td>{{ c.carga_horaria }}h</td>
         </tr>
+        <td>
+            <a href="editar/{{ c.id }}/" class="btn btn-warning btn-sm">✏️ Editar</a>
+
+            <a href="excluir/{{ c.id }}/"
+            class="btn btn-danger btn-sm"
+            onclick="return confirm('Tem certeza que deseja excluir?')">
+            🗑️ Excluir
+            </a>
+        </td>
         {% endfor %}
     </tbody>
 </table>
