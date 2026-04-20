@@ -1,111 +1,114 @@
-
 {% extends 'core/base.html' %}
 
 {% block content %}
-<h1>Minha página</h1>
-{% endblock %}
+<div class="container mt-4">
 
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Folha de Pagamento</title>
-
-    {% load static %}
-    <script src="{% static 'core/js/folha.js' %}" defer></script>
-
-    <style>
-        body {
-            font-family: Arial;
-            margin: 30px;
-        }
-
-        .box {
-            border: 1px solid #ccc;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        input, select {
-            padding: 5px;
-            margin: 5px;
-        }
-    </style>
-</head>
-
-<body>
-
-<h1>💼 Gerar Folha</h1>
-
-<form method="POST">
-    {% csrf_token %}
-
-    <div class="box">
-
-        <label>Funcionário:</label>
-        <select id="funcionario" name="funcionario">
-            <option value="">Selecione</option>
-            {% for f in funcionarios %}
-                <option value="{{ f.id }}" data-salario="{{ f.salario_base }}">
-                    {{ f.nome }}
-                </option>
-            {% endfor %}
-        </select>
-
-        <br>
-
-        <label>Tipo:</label>
-        <select id="tipo" name="tipo">
-            <option value="MENSAL">Mensal</option>
-            <option value="FERIAS">Férias</option>
-            <option value="DECIMO">13º</option>
-        </select>
-
-        <br>
-
-        <label>Mês:</label>
-        <input type="number" id="mes" name="mes">
-
-        <label>Ano:</label>
-        <input type="number" id="ano" name="ano">
-
-        <br><br>
-
-        <label>Salário Base:</label>
-        <input type="text" id="salario_base" readonly>
-
+    <!-- Título + botão -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Folha de Pagamento</h2>
+        <a href="/folha/nova/" class="btn btn-success">
+            + Nova Folha
+        </a>
     </div>
 
-    <button type="submit">💾 Gerar Folha</button>
-</form>
+    <!-- Tabela -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
 
-<!-- EVENTOS (frontend apenas por enquanto) -->
-<div class="box">
-    <h3>Eventos</h3>
+            <thead class="table-dark text-center">
+                <tr>
+                    <th>Funcionário</th>
+                    <th>Salário Base</th>
+                    <th>Descontos</th>
+                    <th>Salário Líquido</th>
+                    <th>Status</th>
+                    <th style="width: 200px;">Ações</th>
+                </tr>
+            </thead>
 
-    <select id="evento">
-        {% for e in eventos %}
-            <option value="{{ e.id }}" data-tipo="{{ e.tipo }}" data-valor="{{ e.valor_fixo|default:0 }}">
-                {{ e.nome }}
-            </option>
-        {% endfor %}
-    </select>
+            <tbody class="text-center">
 
-    <input type="number" id="valor_evento" placeholder="Valor">
+                {% for f in folhas %}
+                <tr>
+                    <td>{{ f.funcionario.nome }}</td>
 
-    <button onclick="adicionarEvento()">Adicionar</button>
+                    <td>
+                        R$ {{ f.salario_base }}
+                    </td>
 
-    <ul id="lista_eventos"></ul>
+                    <td>
+                        R$ {{ f.descontos|default:"0.00" }}
+                    </td>
+
+                    <td>
+                        <strong>R$ {{ f.salario_liquido }}</strong>
+                    </td>
+
+                    <td>
+                        {% if f.fechada %}
+                            <span class="badge bg-success">
+                                Fechada
+                            </span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">
+                                Pendente
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <div class="d-flex justify-content-center gap-1">
+
+                            <!-- Detalhe -->
+                            <a href="/folha/{{ f.id }}/"
+                               class="btn btn-info btn-sm">
+                                Detalhe
+                            </a>
+
+                            {% if not f.fechada %}
+
+                            <!-- Editar -->
+                            <a href="/folha/editar/{{ f.id }}/"
+                               class="btn btn-warning btn-sm">
+                                Editar
+                            </a>
+
+                            <!-- Fechar -->
+                            <a href="/folha/fechar/{{ f.id }}/"
+                               class="btn btn-dark btn-sm"
+                               onclick="return confirm('Deseja fechar esta folha?')">
+                                Fechar
+                            </a>
+
+                            {% endif %}
+
+                        </div>
+                    </td>
+                </tr>
+
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <strong>Nenhuma folha cadastrada.</strong><br>
+                        <a href="/folha/nova/" class="btn btn-primary mt-2">
+                            Criar primeira folha
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+
+                {% if not f.fechada %}
+                    <a href="/folha/excluir/{{ f.id }}/"
+                    class="btn btn-danger btn-sm"
+                    onclick="return confirm('Tem certeza que deseja excluir esta folha?')">
+                        Excluir
+                    </a>
+            {% endif %}
+
+            </tbody>
+
+        </table>
+    </div>
+
 </div>
-
-<div class="box">
-    <h3>Resumo</h3>
-
-    <p>Bruto: <span id="bruto">0</span></p>
-    <p>INSS: <span id="inss">0</span></p>
-    <p>IRRF: <span id="irrf">0</span></p>
-    <p>Líquido: <span id="liquido">0</span></p>
-</div>
-
-</body>
-</html>
+{% endblock %}

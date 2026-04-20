@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Funcionario, Cargo, Departamento, FolhaPagamento
+from django.contrib import messages
 from django.db.models import Sum
-from datetime import datetime
+from django.http import JsonResponse
 
 
 # =========================
@@ -32,19 +33,28 @@ def funcionarios_view(request):
     return render(request, 'core/funcionarios.html', {'funcionarios': funcionarios})
 
 
+# 🔧 Função auxiliar (evita repetir código)
+def tratar_campos_funcionario(request):
+    salario = request.POST.get('salario')
+    dependentes = request.POST.get('dependentes')
+
+    return {
+        'nome': request.POST.get('nome'),
+        'cpf': request.POST.get('cpf'),
+        'data_nascimento': request.POST.get('data_nascimento') or None,
+        'dependentes': int(dependentes) if dependentes else 0,
+        'escolaridade': request.POST.get('escolaridade') or None,
+        'estado_civil': request.POST.get('estado_civil') or None,
+        'salario_base': salario if salario else None,
+        'data_admissao': request.POST.get('admissao'),
+        'cargo_id': request.POST.get('cargo')
+    }
+
+
 def funcionario_create(request):
     if request.method == 'POST':
-        Funcionario.objects.create(
-            nome=request.POST.get('nome'),
-            cpf=request.POST.get('cpf'),
-            data_nascimento=request.POST.get('data_nascimento') or None,
-            dependentes=int(request.POST.get('dependentes') or 0),
-            escolaridade=request.POST.get('escolaridade'),
-            estado_civil=request.POST.get('estado_civil'),
-            salario_base=request.POST.get('salario'),
-            data_admissao=request.POST.get('admissao'),
-            cargo_id=request.POST.get('cargo')
-        )
+        dados = tratar_campos_funcionario(request)
+        Funcionario.objects.create(**dados)
         return redirect('/funcionarios/')
 
     cargos = Cargo.objects.all()
@@ -55,15 +65,10 @@ def funcionario_update(request, id):
     funcionario = get_object_or_404(Funcionario, id=id)
 
     if request.method == 'POST':
-        funcionario.nome = request.POST.get('nome')
-        funcionario.cpf = request.POST.get('cpf')
-        funcionario.data_nascimento = request.POST.get('data_nascimento') or None
-        funcionario.dependentes = int(request.POST.get('dependentes') or 0)
-        funcionario.escolaridade = request.POST.get('escolaridade')
-        funcionario.estado_civil = request.POST.get('estado_civil')
-        funcionario.salario_base = request.POST.get('salario')
-        funcionario.data_admissao = request.POST.get('admissao')
-        funcionario.cargo_id = request.POST.get('cargo')
+        dados = tratar_campos_funcionario(request)
+
+        for campo, valor in dados.items():
+            setattr(funcionario, campo, valor)
 
         funcionario.save()
         return redirect('/funcionarios/')
@@ -91,10 +96,12 @@ def cargos_view(request):
 
 def cargo_create(request):
     if request.method == 'POST':
+        carga = request.POST.get('carga')
+
         Cargo.objects.create(
             nome=request.POST.get('nome'),
             nivel=request.POST.get('nivel'),
-            carga_horaria=int(request.POST.get('carga') or 40),
+            carga_horaria=int(carga) if carga else 40,
             departamento_id=request.POST.get('departamento')
         )
         return redirect('/cargos/')
@@ -107,9 +114,11 @@ def cargo_update(request, id):
     cargo = get_object_or_404(Cargo, id=id)
 
     if request.method == 'POST':
+        carga = request.POST.get('carga')
+
         cargo.nome = request.POST.get('nome')
         cargo.nivel = request.POST.get('nivel')
-        cargo.carga_horaria = int(request.POST.get('carga') or 40)
+        cargo.carga_horaria = int(carga) if carga else 40
         cargo.departamento_id = request.POST.get('departamento')
         cargo.save()
 
@@ -166,3 +175,131 @@ def departamento_delete(request, id):
     departamento = get_object_or_404(Departamento, id=id)
     departamento.delete()
     return redirect('/departamentos/')
+
+def folha_view(request):
+    folhas = FolhaPagamento.objects.select_related('funcionario').all()
+
+    return render(request, 'core/folha.html', {
+        'folhas': folhas
+    })
+
+
+def folha_create(request):
+    funcionarios = Funcionario.objects.all()
+
+    if request.method == 'POST':
+        funcionario_id = request.POST.get('funcionario')
+        mes = request.POST.get('mes')
+        ano = request.POST.get('ano')
+        tipo = request.POST.get('tipo')
+
+        funcionario = Funcionario.objects.get(id=funcionario_id)
+
+        salario = funcionario.salario_base
+
+        # Regras simples (depois podemos melhorar)
+        inss = salario * 0.10
+        irrf = salario * 0.08
+        fgts = salario * 0.08
+        liquido = salario - inss - irrf
+
+        Folha.objects.create(
+            funcionario=funcionario,
+            mes=mes,
+            ano=ano,
+            tipo=tipo,
+            salario_base=salario,
+            inss=inss,
+            irrf=irrf,
+            fgts=fgts,
+            salario_liquido=liquido
+        )
+
+        return redirect('/folha/')
+
+    # 👉 ESSE CARA AQUI QUE ESTAVA FALTANDO
+    return render(request, 'core/form_folha.html', {
+        'funcionarios': funcionarios
+    })
+
+def folha_update(request, id):
+    folha = get_object_or_404(FolhaPagamento, id=id)
+
+    if folha.fechada:
+        return redirect('/folha/')  # não deixa editar
+
+    if request.method == 'POST':
+        descontos = float(request.POST.get('descontos') or 0)
+
+        folha.descontos = descontos
+        folha.salario_liquido = folha.salario_base - descontos
+        folha.save()
+
+        return redirect('/folha/')
+
+    return render(request, 'core/form_folha.html', {'folha': folha})
+
+def folha_detail(request, id):
+    folha = get_object_or_404(FolhaPagamento, id=id)
+    return render(request, 'core/folha_detail.html', {'folha': folha})
+
+def folha_fechar(request, id):
+    folha = get_object_or_404(FolhaPagamento, id=id)
+
+    folha.fechada = True
+    folha.save()
+
+    return redirect('/folha/')
+
+
+def folha_delete(request, id):
+    if request.method == 'POST':
+        folha = get_object_or_404(FolhaPagamento, id=id)
+
+        if folha.fechada:
+            messages.error(request, 'Não é possível excluir uma folha já fechada.')
+        else:
+            folha.delete()
+            messages.success(request, 'Folha excluída com sucesso!')
+
+    return redirect('/folha/')
+
+def calcular_folha(tipo, salario):
+    inss = 0
+    irrf = 0
+    fgts = 0
+    liquido = 0
+
+    if tipo == 'normal':
+        inss = salario * 0.10
+        irrf = salario * 0.08
+        fgts = salario * 0.08
+        liquido = salario - inss - irrf
+
+    elif tipo == 'ferias':
+        bruto = salario + (salario / 3)
+        inss = bruto * 0.10
+        irrf = bruto * 0.08
+        fgts = bruto * 0.08
+        liquido = bruto - inss - irrf
+
+    elif tipo == 'decimo':
+        bruto = salario
+        inss = bruto * 0.10
+        irrf = bruto * 0.08
+        fgts = bruto * 0.08
+        liquido = bruto - inss - irrf
+
+    return {
+        'inss': inss,
+        'irrf': irrf,
+        'fgts': fgts,
+        'liquido': liquido
+    }
+
+def get_funcionario(request, id):
+    func = Funcionario.objects.get(id=id)
+
+    return JsonResponse({
+        'salario': float(func.salario_base)
+    })

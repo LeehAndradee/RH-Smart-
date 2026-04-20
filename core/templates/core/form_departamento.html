@@ -1,0 +1,59 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h2>
+        {% if cargo %}
+            Editar Cargo
+        {% else %}
+            Novo Cargo
+        {% endif %}
+    </h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Nome -->
+        <div class="mb-3">
+            <label class="form-label">Nome do Cargo:</label>
+            <input type="text" name="nome" class="form-control"
+                   value="{{ cargo.nome|default:'' }}" required>
+        </div>
+
+        <!-- Nível -->
+        <div class="mb-3">
+            <label class="form-label">Nível:</label>
+            <input type="text" name="nivel" class="form-control"
+                   value="{{ cargo.nivel|default:'' }}" required>
+        </div>
+
+        <!-- Carga horária -->
+        <div class="mb-3">
+            <label class="form-label">Carga Horária (horas):</label>
+            <input type="number" name="carga" class="form-control"
+                   value="{{ cargo.carga_horaria|default:40 }}" required>
+        </div>
+
+        <!-- Departamento -->
+        <div class="mb-3">
+            <label class="form-label">Departamento:</label>
+            <select name="departamento" class="form-control" required>
+                <option value="">Selecione</option>
+                {% for d in departamentos %}
+                    <option value="{{ d.id }}"
+                        {% if cargo and cargo.departamento.id == d.id %}selected{% endif %}>
+                        {{ d.nome }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Botões -->
+        <button type="submit" class="btn btn-success">Salvar</button>
+        <a href="/cargos/" class="btn btn-secondary">Cancelar</a>
+
+    </form>
+
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<h2>Detalhes da Folha</h2>
+
+<p><strong>Funcionário:</strong> {{ folha.funcionario.nome }}</p>
+<p><strong>Salário Base:</strong> {{ folha.salario_base }}</p>
+<p><strong>Descontos:</strong> {{ folha.descontos }}</p>
+<p><strong>Salário Líquido:</strong> {{ folha.salario_liquido }}</p>
+<p><strong>Status:</strong> {{ folha.fechada|yesno:"Fechada,Pendente" }}</p>
+
+<a href="/folha/">Voltar</a>
+{% endblock %}

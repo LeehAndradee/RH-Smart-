@@ -140,10 +140,14 @@ class Evento(models.Model):
 # ==============================
 class FolhaPagamento(models.Model):
 
+
+    
+
     TIPOS = [
         ('MENSAL', 'Mensal'),
         ('FERIAS', 'Férias'),
         ('DECIMO', '13º'),
+        ('RESCISÃO', 'Rescisão'),
     ]
 
     funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE)
@@ -161,6 +165,8 @@ class FolhaPagamento(models.Model):
     inss = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     irrf = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     fgts = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    eventos = models.ManyToManyField(Evento, blank=True)
 
     salario_liquido = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
@@ -168,6 +174,17 @@ class FolhaPagamento(models.Model):
     fechada = models.BooleanField(default=False)
     atualizado_em = models.DateTimeField(auto_now=True)
 
+
+
+def clean(self):
+    if self.mes < 1 or self.mes > 12:
+        raise ValidationError("Mês inválido")
+
+    if self.ano < 2000:
+        raise ValidationError("Ano inválido")
+
+    if self.fechado and self.pk:
+        raise ValidationError("Folha já fechada não pode ser alterada")
     
     # ==============================
     # MESES TRABALHADOS
@@ -230,35 +247,71 @@ class FolhaPagamento(models.Model):
     # ==============================
     # CÁLCULO PRINCIPAL
     # ==============================
-    def calcular_salario(self):
-        self.salario_bruto = self.salario_base
+def calcular_salario(self):
+    self.salario_bruto = self.salario_base
 
-        if self.tipo == 'FERIAS':
-            self.salario_bruto += self.salario_base / 3
+    # =========================
+    # REGRAS POR TIPO
+    # =========================
+    if self.tipo == 'FERIAS':
+        self.salario_bruto += self.salario_base / Decimal('3')
 
-        elif self.tipo == 'DECIMO':
-            meses = self.meses_trabalhados()
-            self.salario_bruto = (self.salario_base / 12) * meses
+    elif self.tipo == 'DECIMO':
+        meses = self.meses_trabalhados()
+        self.salario_bruto = (self.salario_base / 12) * meses
 
-        self.inss = self.calcular_inss(self.salario_bruto)
+    elif self.tipo == 'RESCISAO':
+        meses = self.meses_trabalhados()
+        self.salario_bruto = (self.salario_base / 12) * meses
 
-        base_irrf = self.salario_bruto - self.inss - (self.funcionario.dependentes * Decimal('189.59'))
-        self.irrf = max(self.calcular_irrf(base_irrf), Decimal('0'))
+    # =========================
+    # EVENTOS
+    # =========================
+    itens = self.itemfolha_set.all()
 
-        self.fgts = self.salario_bruto * Decimal('0.08')
+    proventos = Decimal('0')
+    descontos = Decimal('0')
 
-        self.salario_liquido = self.salario_bruto - self.inss - self.irrf
+    for item in itens:
+        if item.evento.tipo == 'PROVENTO':
+            proventos += item.valor
+        else:
+            descontos += item.valor
 
-    def save(self, *args, **kwargs):
-        if self.funcionario:
-            self.salario_base = self.funcionario.salario_base
+    self.total_proventos = proventos
+    self.total_descontos = descontos
 
-        self.calcular_salario()
-        super().save(*args, **kwargs)
+    self.salario_bruto += proventos
 
-    def __str__(self):
-        return f"{self.funcionario} - {self.tipo} - {self.mes}/{self.ano}"
+    # =========================
+    # IMPOSTOS
+    # =========================
+    self.inss = self.calcular_inss(self.salario_bruto)
 
+    base_irrf = self.salario_bruto - self.inss - (self.funcionario.dependentes * Decimal('189.59'))
+    self.irrf = max(self.calcular_irrf(base_irrf), Decimal('0'))
+
+    self.fgts = self.salario_bruto * Decimal('0.08')
+
+    # =========================
+    # FINAL
+    # =========================
+    self.salario_liquido = (
+        self.salario_bruto
+        - self.inss
+        - self.irrf
+        - descontos
+    )
+
+
+def save(self, *args, **kwargs):
+    if self.funcionario:
+        self.salario_base = self.funcionario.salario_base
+
+    self.full_clean()
+    self.calcular_salario()
+
+    super().save(*args, **kwargs)
 
 # ==============================
 # ITEM DA FOLHA
@@ -266,18 +319,25 @@ class FolhaPagamento(models.Model):
 class ItemFolha(models.Model):
     folha = models.ForeignKey(FolhaPagamento, on_delete=models.CASCADE)
     evento = models.ForeignKey(Evento, on_delete=models.CASCADE)
-    valor = models.DecimalField(max_digits=10, decimal_places=2)
+    valor = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def calcular_valor(self):
+        if self.evento.percentual:
+            return self.folha.salario_base * (self.evento.percentual / Decimal('100'))
+        elif self.evento.valor_fixo:
+            return self.evento.valor_fixo
+        return Decimal('0')
 
     def save(self, *args, **kwargs):
-        if self.evento.percentual:
-            self.valor = self.folha.salario_base * (self.evento.percentual / 100)
-        elif self.evento.valor_fixo:
-            self.valor = self.evento.valor_fixo
-
+        self.valor = self.calcular_valor()
         super().save(*args, **kwargs)
 
+        # Recalcula folha após salvar evento
         self.folha.calcular_salario()
         self.folha.save()
 
     def __str__(self):
-        return f"{self.evento} - {self.valor}"
+        return f"{self.evento.nome} - {self.valor}"
+    
+
+    
