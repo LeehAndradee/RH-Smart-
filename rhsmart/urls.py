@@ -16,11 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from core.views import dashboard_view  # 👈 IMPORTANTE
+from core.views import dashboard_view
+from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-
+    path('accounts/', include('django.contrib.auth.urls')),
+    
     # 🔥 rota principal (abre o dashboard)
     path('', dashboard_view),
 

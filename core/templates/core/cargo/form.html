@@ -1,4 +1,4 @@
-{% extends 'core/base.html' %}
+{% extends 'base.html' %}
 
 {% block content %}
 <div class="container mt-4">
@@ -14,44 +14,42 @@
     <form method="post">
         {% csrf_token %}
 
-        <!-- Nome -->
         <div class="mb-3">
             <label class="form-label">Nome do Cargo:</label>
             <input type="text" name="nome" class="form-control"
                    value="{{ cargo.nome|default:'' }}" required>
         </div>
 
-        <!-- Nível -->
         <div class="mb-3">
             <label class="form-label">Nível:</label>
             <input type="text" name="nivel" class="form-control"
-                   value="{{ cargo.nivel|default:'' }}" required>
+                   value="{{ cargo.nivel|default:'' }}" required 
+                   placeholder="Ex: Júnior, Pleno, Sênior">
         </div>
 
-        <!-- Carga horária -->
         <div class="mb-3">
             <label class="form-label">Carga Horária (horas):</label>
-            <input type="number" name="carga" class="form-control"
+            <input type="number" name="carga_horaria" class="form-control"
                    value="{{ cargo.carga_horaria|default:40 }}" required>
         </div>
 
-        <!-- Departamento -->
         <div class="mb-3">
             <label class="form-label">Departamento:</label>
-            <select name="departamento" class="form-control" required>
-                <option value="">Selecione</option>
+            <select name="departamento" class="form-select" required>
+                <option value="" disabled {% if not cargo %}selected{% endif %}>Selecione</option>
                 {% for d in departamentos %}
                     <option value="{{ d.id }}"
-                        {% if cargo and cargo.departamento.id == d.id %}selected{% endif %}>
+                        {% if cargo.departamento.id == d.id %}selected{% endif %}>
                         {{ d.nome }}
                     </option>
                 {% endfor %}
             </select>
         </div>
 
-        <!-- Botões -->
-        <button type="submit" class="btn btn-success">Salvar</button>
-        <a href="/cargos/" class="btn btn-secondary">Cancelar</a>
+        <div class="mt-4">
+            <button type="submit" class="btn btn-success">Salvar Cargo</button>
+            <a href="{% url 'cargos_view' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
 
     </form>
 

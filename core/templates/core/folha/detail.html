@@ -1,4 +1,4 @@
-{% extends 'core/base.html' %}
+{% extends 'base.html' %}
 
 {% block content %}
 
@@ -33,12 +33,11 @@
 
 <div class="card p-4 mb-3">
     <h5>Resumo</h5>
-
-    <p>Bruto: R$ {{ folha.salario_bruto }}</p>
-    <p>INSS: R$ {{ folha.inss }}</p>
-    <p>IRRF: R$ {{ folha.irrf }}</p>
-    <p>FGTS: R$ {{ folha.fgts }}</p>
-    <h4>Líquido: R$ {{ folha.salario_liquido }}</h4>
+        <p>Bruto: R$ {{ folha.salario_bruto|floatformat:2 }}</p>
+        <p>INSS: R$ {{ folha.inss|floatformat:2 }}</p>
+        <p>IRRF: R$ {{ folha.irrf|floatformat:2 }}</p>
+        <p>FGTS: R$ {{ folha.fgts|floatformat:2 }}</p>
+        <h4>Líquido: R$ {{ folha.salario_liquido|floatformat:2 }}</h4>
 </div>
 
 {% if not folha.fechada %}

@@ -1,28 +1,48 @@
-{% extends 'core/base.html' %}
+{% extends "base.html" %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Eventos da Folha</h2>
-    <a href="/eventos/novo/" class="btn btn-primary">Novo Evento</a>
-</div>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Eventos (Proventos e Descontos)</h2>
+        <a href="{% url 'evento_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Novo Evento
+        </a>
+    </div>
 
-<div class="row">
-    {% for e in eventos %}
-    <div class="col-md-4 mb-3">
-        <div class="card shadow-sm border-left {% if e.tipo == 'PROVENTO' %}border-success{% else %}border-danger{% endif %}">
-            <div class="card-body">
-                <h5 class="card-title">{{ e.nome }}</h5>
-                <p class="card-text">
-                    <span class="badge {% if e.tipo == 'PROVENTO' %}bg-success{% else %}bg-danger{% endif %}">
-                        {{ e.tipo }}
-                    </span>
-                    <br>
-                    <strong>Valor/Percentual:</strong> {{ e.valor }}
-                </p>
-                <a href="/eventos/editar/{{ e.id }}/" class="btn btn-sm btn-outline-secondary">Configurar</a>
-            </div>
+    <div class="card shadow">
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nome</th>
+                        <th>Tipo</th>
+                        <th>Valor/Percentual</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for evento in eventos %}
+                    <tr>
+                        <td>{{ evento.nome }}</td>
+                        <td>
+                            <span class="badge {% if evento.tipo == 'P' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ evento.get_tipo_display }}
+                            </span>
+                        </td>
+                        <td>{{ evento.valor }}</td>
+                        <td>
+                            <a href="#" class="btn btn-sm btn-warning">Editar</a>
+                            <a href="#" class="btn btn-sm btn-danger">Excluir</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">Nenhum evento cadastrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
-    {% endfor %}
 </div>
 {% endblock %}

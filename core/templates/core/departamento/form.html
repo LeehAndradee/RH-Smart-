@@ -1,59 +1,62 @@
-{% extends 'core/base.html' %}
+{% extends 'base.html' %}
 
 {% block content %}
 <div class="container mt-4">
-
-    <h2>
-        {% if cargo %}
-            Editar Cargo
-        {% else %}
-            Novo Cargo
-        {% endif %}
-    </h2>
-
-    <form method="post">
-        {% csrf_token %}
-
-        <!-- Nome -->
-        <div class="mb-3">
-            <label class="form-label">Nome do Cargo:</label>
-            <input type="text" name="nome" class="form-control"
-                   value="{{ cargo.nome|default:'' }}" required>
+    <div class="card shadow border-0">
+        <div class="card-header bg-dark text-white">
+            <h4 class="mb-0">
+                {% if departamento %}
+                    <i class="fas fa-edit me-2"></i>Editar Departamento
+                {% else %}
+                    <i class="fas fa-plus me-2"></i>Novo Departamento
+                {% endif %}
+            </h4>
         </div>
+        
+        <div class="card-body p-4">
+            <form method="post" action=".">
+                {% csrf_token %}
 
-        <!-- Nível -->
-        <div class="mb-3">
-            <label class="form-label">Nível:</label>
-            <input type="text" name="nivel" class="form-control"
-                   value="{{ cargo.nivel|default:'' }}" required>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Nome do Departamento:</label>
+                    <input type="text" name="nome" class="form-control shadow-sm"
+                           placeholder="Ex: Recursos Humanos"
+                           value="{{ departamento.nome|default:'' }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Descrição:</label>
+                    <textarea name="descricao" class="form-control shadow-sm" rows="3" 
+                              placeholder="Descreva as responsabilidades deste setor...">{{ departamento.descricao|default:'' }}</textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Departamento Superior (Opcional):</label>
+                    <select name="parent_id" class="form-select shadow-sm">
+                        <option value="">Nenhum (Departamento Principal)</option>
+                        {% for d in departamentos %}
+                            {% if departamento %}
+                                {% if d.id != departamento.id %}
+                                    <option value="{{ d.id }}" {% if departamento.parent.id == d.id %}selected{% endif %}>
+                                        {{ d.nome }}
+                                    </option>
+                                {% endif %}
+                            {% else %}
+                                <option value="{{ d.id }}">{{ d.nome }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <hr>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-success px-5 fw-bold shadow">
+                        <i class="fas fa-save me-2"></i>Salvar Departamento
+                    </button>
+                </div>
+            </form>
         </div>
-
-        <!-- Carga horária -->
-        <div class="mb-3">
-            <label class="form-label">Carga Horária (horas):</label>
-            <input type="number" name="carga" class="form-control"
-                   value="{{ cargo.carga_horaria|default:40 }}" required>
-        </div>
-
-        <!-- Departamento -->
-        <div class="mb-3">
-            <label class="form-label">Departamento:</label>
-            <select name="departamento" class="form-control" required>
-                <option value="">Selecione</option>
-                {% for d in departamentos %}
-                    <option value="{{ d.id }}"
-                        {% if cargo and cargo.departamento.id == d.id %}selected{% endif %}>
-                        {{ d.nome }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <!-- Botões -->
-        <button type="submit" class="btn btn-success">Salvar</button>
-        <a href="/cargos/" class="btn btn-secondary">Cancelar</a>
-
-    </form>
-
+    </div>
 </div>
 {% endblock %}

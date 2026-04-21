@@ -1,9 +1,9 @@
-{% extends 'core/base.html' %}
+{% extends 'base.html' %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Departamentos</h2>
-    <a href="/departamentos/novo/" class="btn btn-primary">Novo Departamento</a>
+    <a href="{% url 'departamento_create' %}" class="btn btn-primary">Novo Departamento</a>
 </div>
 
 <table class="table table-hover bg-white border">
@@ -20,8 +20,13 @@
             <td>{{ d.nome }}</td>
             <td>{{ d.sigla|default:"-" }}</td>
             <td class="text-center">
-                <a href="/departamentos/editar/{{ d.id }}/" class="btn btn-sm btn-warning">Editar</a>
-                <a href="/departamentos/excluir/{{ d.id }}/" class="btn btn-sm btn-danger">Excluir</a>
+                <a href="{% url 'departamento_update' d.id %}" class="btn btn-sm btn-warning">Editar</a>
+                
+                <a href="{% url 'departamento_delete' d.id %}" 
+                   class="btn btn-sm btn-danger" 
+                   onclick="return confirm('Tem certeza que deseja excluir este departamento?')">
+                   Excluir
+                </a>
             </td>
         </tr>
         {% empty %}

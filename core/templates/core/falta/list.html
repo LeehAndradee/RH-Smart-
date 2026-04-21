@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Registro de Faltas</h2>
+    <a href="{% url 'falta_create' %}" class="btn btn-primary mb-3">Lançar Falta</a>
+    
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Funcionário</th>
+                <th>Data</th>
+                <th>Motivo</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="3" class="text-center">Nenhuma falta registrada.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

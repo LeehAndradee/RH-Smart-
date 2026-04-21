@@ -24,9 +24,11 @@
             background: #34495e; 
             border-radius: 5px;
         }
+        /* Classe que destaca o menu atual */
         .nav-link.active {
-            color: #fff;
-            background: #1abc9c;
+            color: #fff !important;
+            background: #1abc9c !important;
+            border-radius: 5px;
         }
         .main-content { 
             padding: 30px; 
@@ -44,26 +46,26 @@
                 <hr>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link" href="/">🏠 Dashboard</a>
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">🏠 Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/departamentos/">🏢 Departamentos</a>
+                        <a class="nav-link {% if 'departamentos' in request.path %}active{% endif %}" href="{% url 'departamento_view' %}">🏢 Departamentos</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/cargos/">💼 Cargos</a>
+                        <a class="nav-link {% if 'cargos' in request.path %}active{% endif %}" href="{% url 'cargos_view' %}">💼 Cargos</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/funcionarios/">👥 Funcionários</a>
+                        <a class="nav-link {% if 'funcionarios' in request.path %}active{% endif %}" href="{% url 'funcionarios_view' %}">👥 Funcionários</a>
                     </li>
                     
                     <li class="nav-item">
-                        <a class="nav-link" href="/eventos/">⚡ Eventos</a>
+                        <a class="nav-link {% if 'eventos' in request.path %}active{% endif %}" href="{% url 'eventos_list' %}">⚡ Eventos</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/faltas/">⚠️ Faltas</a>
+                        <a class="nav-link {% if 'faltas' in request.path %}active{% endif %}" href="{% url 'faltas_list' %}">⚠️ Faltas</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/folha/">📄 Folha de Pagamento</a>
+                        <a class="nav-link {% if 'folha' in request.path %}active{% endif %}" href="{% url 'folha_view' %}">📄 Folha de Pagamento</a>
                     </li>
                 </ul>
             </nav>
