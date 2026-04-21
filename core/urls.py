@@ -31,7 +31,9 @@ urlpatterns = [
 
     # --- EVENTOS E FALTAS ---
     path('eventos/', views.eventos_view, name='eventos_list'),
-    path('eventos/novo/', views.evento_create, name='evento_create'),  
+    path('eventos/novo/', views.evento_create, name='evento_create'),
+    path('eventos/editar/<int:id>/', views.evento_update, name='evento_update'),
+    path('eventos/excluir/<int:id>/', views.evento_delete, name='evento_delete'),  
     path('faltas/', views.faltas_view, name='faltas_list'),
     path('faltas/nova/', views.cadastrar_falta, name='falta_create'),
 

@@ -3,45 +3,75 @@
 {% block content %}
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Eventos (Proventos e Descontos)</h2>
-        <a href="{% url 'evento_create' %}" class="btn btn-primary">
+        <div>
+            <h2 class="mb-0">Eventos</h2>
+            <p class="text-muted">Gestão de Proventos e Descontos para a Folha</p>
+        </div>
+        <a href="{% url 'evento_create' %}" class="btn btn-primary shadow-sm">
             <i class="fas fa-plus"></i> Novo Evento
         </a>
     </div>
 
-    <div class="card shadow">
-        <div class="card-body">
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>Nome</th>
-                        <th>Tipo</th>
-                        <th>Valor/Percentual</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for evento in eventos %}
-                    <tr>
-                        <td>{{ evento.nome }}</td>
-                        <td>
-                            <span class="badge {% if evento.tipo == 'P' %}bg-success{% else %}bg-danger{% endif %}">
-                                {{ evento.get_tipo_display }}
-                            </span>
-                        </td>
-                        <td>{{ evento.valor }}</td>
-                        <td>
-                            <a href="#" class="btn btn-sm btn-warning">Editar</a>
-                            <a href="#" class="btn btn-sm btn-danger">Excluir</a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="4" class="text-center text-muted">Nenhum evento cadastrado.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <div class="card shadow border-0">
+        <div class="card-body p-0"> <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Nome</th>
+                            <th>Tipo</th>
+                            <th>Valor Padrão</th>
+                            <th class="text-center pe-4">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for evento in eventos %}
+                        <tr>
+                            <td class="ps-4 align-middle fw-bold">{{ evento.nome }}</td>
+                            <td class="align-middle">
+                                {% if evento.tipo == 'P' %}
+                                    <span class="badge bg-success-subtle text-success border border-success">
+                                        <i class="fas fa-arrow-up small"></i> Provento
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger">
+                                        <i class="fas fa-arrow-down small"></i> Desconto
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="align-middle">
+                                R$ {{ evento.valor_fixo|default:"0.00" }}
+                            </td>
+                            <td class="text-center pe-4 align-middle">
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'evento_update' evento.id %}" 
+                                       class="btn btn-sm btn-outline-warning" 
+                                       title="Editar Evento">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    
+                                    <a href="{% url 'evento_delete' evento.id %}" 
+                                       class="btn btn-sm btn-outline-danger" 
+                                       title="Excluir Evento"
+                                       onclick="return confirm('Tem certeza que deseja excluir o evento: {{ evento.nome }}?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-info-circle fa-2x mb-3"></i>
+                                    <p>Nenhum evento cadastrado até o momento.</p>
+                                    <a href="{% url 'evento_create' %}" class="btn btn-sm btn-primary">Cadastrar Primeiro</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

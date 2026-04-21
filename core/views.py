@@ -166,13 +166,47 @@ def departamento_delete(request, id):
     get_object_or_404(Departamento, id=id).delete()
     return redirect('departamentos_view')
 
-# --- EVENTOS ---
+
+# LISTAGEM DE EVENTOS
 def eventos_view(request):
     eventos = Evento.objects.all()
     return render(request, 'core/evento/list.html', {'eventos': eventos})
 
 def evento_create(request):
+    if request.method == "POST":
+        # PEGANDO OS DADOS DO HTML (Use 'nome', não 'nome_evento')
+        nome = request.POST.get('nome') 
+        tipo = request.POST.get('tipo')
+        valor = request.POST.get('valor')
+
+        # SALVANDO NO BANCO (Use 'valor_fixo' conforme seu log mostrou)
+        Evento.objects.create(
+            nome=nome,
+            tipo=tipo,
+            valor_fixo=valor  
+        )
+        return redirect('eventos_list')
+    
     return render(request, 'core/evento/form.html')
+
+# EDITAR EVENTO
+def evento_update(request, id):
+    evento = get_object_or_404(Evento, id=id)
+    
+    if request.method == "POST":
+        evento.nome = request.POST.get('nome_evento')
+        evento.tipo = request.POST.get('tipo')
+        evento.valor_padrao = request.POST.get('valor')
+        evento.save()
+        return redirect('eventos_view')
+
+    return render(request, 'core/evento/form.html', {'evento': evento, 'editando': True})
+
+# EXCLUIR EVENTO
+def evento_delete(request, id):
+    evento = get_object_or_404(Evento, id=id)
+    evento.delete()
+    return redirect('eventos_list')
 
 # --- FALTAS ---
 def faltas_view(request):
