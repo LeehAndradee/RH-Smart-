@@ -1,0 +1,28 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Eventos da Folha</h2>
+    <a href="/eventos/novo/" class="btn btn-primary">Novo Evento</a>
+</div>
+
+<div class="row">
+    {% for e in eventos %}
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm border-left {% if e.tipo == 'PROVENTO' %}border-success{% else %}border-danger{% endif %}">
+            <div class="card-body">
+                <h5 class="card-title">{{ e.nome }}</h5>
+                <p class="card-text">
+                    <span class="badge {% if e.tipo == 'PROVENTO' %}bg-success{% else %}bg-danger{% endif %}">
+                        {{ e.tipo }}
+                    </span>
+                    <br>
+                    <strong>Valor/Percentual:</strong> {{ e.valor }}
+                </p>
+                <a href="/eventos/editar/{{ e.id }}/" class="btn btn-sm btn-outline-secondary">Configurar</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

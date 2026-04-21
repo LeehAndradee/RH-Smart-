@@ -2,71 +2,82 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RH Smart</title>
-
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            margin: 0;
+        .sidebar { 
+            min-height: 100vh; 
+            background: #2c3e50; 
+            color: white; 
+            padding-top: 20px; 
+            position: sticky;
+            top: 0;
         }
-
-.content {
-    margin-left: 260px;
-    padding: 30px;
-    background: #f3f4f6;
-    min-height: 100vh;
-}
-        .sidebar {
-            width: 250px;
-            height: 100vh;
-            background: #1f2937;
-            color: white;
-            position: fixed;
-            padding: 20px;
+        .nav-link { 
+            color: #bdc3c7; 
+            padding: 12px 20px;
+            transition: all 0.3s;
         }
-
-        .sidebar h4 {
-            margin-bottom: 30px;
-        }
-
-        .sidebar a {
-            display: block;
-            color: white;
-            text-decoration: none;
-            margin: 10px 0;
-            padding: 10px;
+        .nav-link:hover { 
+            color: white; 
+            background: #34495e; 
             border-radius: 5px;
         }
-
-        .sidebar a:hover {
-            background: #374151;
+        .nav-link.active {
+            color: #fff;
+            background: #1abc9c;
         }
-
-        .content {
-            margin-left: 260px;
-            padding: 20px;
+        .main-content { 
+            padding: 30px; 
+            background: #f8f9fa; 
+            min-height: 100vh; 
         }
+        hr { border-color: #7f8c8d; }
     </style>
 </head>
-
 <body>
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-3 col-lg-2 sidebar d-none d-md-block shadow">
+                <h4 class="text-center py-2">🚀 RH Smart</h4>
+                <hr>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">🏠 Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/departamentos/">🏢 Departamentos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/cargos/">💼 Cargos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/funcionarios/">👥 Funcionários</a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="/eventos/">⚡ Eventos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/faltas/">⚠️ Faltas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/folha/">📄 Folha de Pagamento</a>
+                    </li>
+                </ul>
+            </nav>
 
-<div class="sidebar">
-    <h4>💼 RH Smart</h4>
+            <main class="col-md-9 col-lg-10 main-content">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        {% block content %}{% endblock %}
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
 
-    <a href="/">🏠 Dashboard</a>
-    <a href="/funcionarios/">👤 Funcionários</a>
-    <a href="/cargos/">📌 Cargos</a>
-    <a href="/departamentos/">🏢 Departamentos</a>
-    <a href="/folha/">💰 Folha de Pagamento</a>
-</div>
-
-<div class="content">
-    {% block content %}
-    {% endblock %}
-</div>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

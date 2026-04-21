@@ -1,66 +1,21 @@
 {% extends 'core/base.html' %}
 
 {% block content %}
-
-<h2 class="mb-4">📊 Dashboard</h2>
-
-<div class="row mb-4">
-
-    <div class="col-md-3">
-        <div class="card text-white bg-primary p-3">
-            <h6>Total Funcionários</h6>
-            <h3>{{ total_funcionarios }}</h3>
+<h2>Bem-vindo ao RH Smart</h2>
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white p-3 text-center">
+            <h3>Funcionários</h3>
+            <p class="display-6">Gerencie sua equipe</p>
+            <a href="/funcionarios/" class="btn btn-light btn-sm">Ver Todos</a>
         </div>
     </div>
-
-    <div class="col-md-3">
-        <div class="card text-white bg-success p-3">
-            <h6>Folhas Fechadas</h6>
-            <h3>{{ folhas_fechadas }}</h3>
+    <div class="col-md-4">
+        <div class="card bg-success text-white p-3 text-center">
+            <h3>Folha</h3>
+            <p class="display-6">Processar Pagamentos</p>
+            <a href="/folha/" class="btn btn-light btn-sm">Acessar</a>
         </div>
     </div>
-
-    <div class="col-md-3">
-        <div class="card text-white bg-warning p-3">
-            <h6>Pendentes</h6>
-            <h3>{{ folhas_pendentes }}</h3>
-        </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="card text-white bg-dark p-3">
-            <h6>Total Pago</h6>
-            <h3>R$ {{ total_pago }}</h3>
-        </div>
-    </div>
-
 </div>
-
-<!-- GRÁFICO -->
-<div class="card p-4">
-    <h5>📈 Total pago por mês</h5>
-    <canvas id="grafico"></canvas>
-</div>
-
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-    const meses = {{ meses|safe }};
-    const valores = {{ valores|safe }};
-
-    const ctx = document.getElementById('grafico');
-
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: meses,
-            datasets: [{
-                label: 'Total Pago',
-                data: valores
-            }]
-        }
-    });
-</script>
-
 {% endblock %}
