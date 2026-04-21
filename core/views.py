@@ -244,6 +244,22 @@ def folha_detail(request, id):
 
 def folha_update(request, id):
     folha = get_object_or_404(FolhaPagamento, id=id)
+
+    # 🚫 Regra: não pode editar se estiver fechada
+    if folha.fechada:
+        from django.contrib import messages
+        messages.error(request, "Folha já está fechada e não pode ser editada.")
+        return redirect('folha_detail', id=id)
+
+    if request.method == 'POST':
+        folha.mes = int(request.POST.get('mes'))
+        folha.ano = int(request.POST.get('ano'))
+        folha.tipo = request.POST.get('tipo')
+
+        folha.save()  # 🔥 recalcula tudo automaticamente
+
+        return redirect('folha_detail', id=folha.id)
+
     return render(request, 'core/folha/form.html', {'folha': folha})
 
 def folha_fechar(request, id):
@@ -253,9 +269,15 @@ def folha_fechar(request, id):
     return redirect('folha_detail', id=id)
 
 def folha_delete(request, id):
-    get_object_or_404(FolhaPagamento, id=id).delete()
-    return redirect('folha_view')
+    folha = get_object_or_404(FolhaPagamento, id=id)
 
+    if folha.fechada:
+        from django.contrib import messages
+        messages.error(request, "Folha fechada não pode ser excluída.")
+        return redirect('folha_detail', id=id)
+
+    folha.delete()
+    return redirect('folha_view')
 # --- API ---
 def get_funcionario(request, id):
     funcionario = get_object_or_404(Funcionario, id=id)
