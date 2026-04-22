@@ -1,47 +1,50 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
 {% block content %}
 <div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header {% if evento %}bg-warning{% else %}bg-primary{% endif %} text-white">
-                    <h4 class="mb-0">{% if evento %}Editar{% else %}Cadastrar Novo{% endif %} Evento</h4>
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">{% if evento.id %}Modificar Evento{% else %}Novo Evento{% endif %}</h4>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Nome:</label>
+                    <input type="text" name="nome" class="form-control" 
+                           value="{{ evento.nome|default:'' }}" required>
                 </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Nome do Evento</label>
-                            <input type="text" name="nome" class="form-control" 
-                                   value="{{ evento.nome|default:'' }}" 
-                                   placeholder="Ex: Horas Extras, INSS, Vale Refeição" required>
-                        </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Tipo</label>
-                            <select name="tipo" class="form-select" required>
-                                <option value="P" {% if evento.tipo == 'P' %}selected{% endif %}>Provento (Soma)</option>
-                                <option value="D" {% if evento.tipo == 'D' %}selected{% endif %}>Desconto (Subtrai)</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Valor ou Porcentagem</label>
-                            <input type="number" step="0.01" name="valor" class="form-control" 
-                                   value="{{ evento.valor|default:'0.00' }}" required>
-                        </div>
-
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'eventos_list' %}" class="btn btn-secondary">Cancelar</a>
-                            <button type="submit" class="btn {% if evento %}btn-warning{% else %}btn-success{% endif %}">
-                                {% if evento %}Salvar Alterações{% else %}Salvar Evento{% endif %}
-                            </button>
-                        </div>
-                    </form>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tipo:</label>
+                    <select name="tipo" class="form-select" required>
+                        <option value="P" {% if evento.tipo == 'P' %}selected{% endif %}>Provento (+)</option>
+                        <option value="D" {% if evento.tipo == 'D' %}selected{% endif %}>Desconto (-)</option>
+                    </select>
                 </div>
-            </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Percentual:</label>
+                        <input type="number" step="0.0001" name="percentual" class="form-control" 
+                               value="{{ evento.percentual|stringformat:'s'|default:'' }}" 
+                               placeholder="Ex: 5.0">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Valor fixo:</label>
+                        <input type="number" step="0.01" name="valor_fixo" class="form-control" 
+                               value="{{ evento.valor_fixo|stringformat:'.2f'|default:'' }}" 
+                               placeholder="0,00">
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary px-4">SALVAR</button>
+                    <a href="{% url 'eventos_list' %}" class="btn btn-outline-secondary px-4">CANCELAR</a>
+                </div>
+            </form>
         </div>
     </div>
 </div>

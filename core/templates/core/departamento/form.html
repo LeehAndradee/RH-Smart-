@@ -5,8 +5,8 @@
     <div class="card shadow border-0">
         <div class="card-header bg-dark text-white">
             <h4 class="mb-0">
-                {% if departamento %}
-                    <i class="fas fa-edit me-2"></i>Editar Departamento
+                {% if departamento.id %}
+                    <i class="fas fa-edit me-2"></i>Editar Departamento: {{ departamento.nome }}
                 {% else %}
                     <i class="fas fa-plus me-2"></i>Novo Departamento
                 {% endif %}
@@ -14,7 +14,7 @@
         </div>
         
         <div class="card-body p-4">
-            <form method="post" action=".">
+            <form method="post">
                 {% csrf_token %}
 
                 <div class="mb-3">
@@ -27,7 +27,7 @@
                 <div class="mb-3">
                     <label class="form-label fw-bold">Descrição:</label>
                     <textarea name="descricao" class="form-control shadow-sm" rows="3" 
-                              placeholder="Descreva as responsabilidades deste setor...">{{ departamento.descricao|default:'' }}</textarea>
+                              placeholder="Descreva as responsabilidades...">{{ departamento.descricao|default:'' }}</textarea>
                 </div>
 
                 <div class="mb-4">
@@ -35,15 +35,9 @@
                     <select name="parent_id" class="form-select shadow-sm">
                         <option value="">Nenhum (Departamento Principal)</option>
                         {% for d in departamentos %}
-                            {% if departamento %}
-                                {% if d.id != departamento.id %}
-                                    <option value="{{ d.id }}" {% if departamento.parent.id == d.id %}selected{% endif %}>
-                                        {{ d.nome }}
-                                    </option>
-                                {% endif %}
-                            {% else %}
-                                <option value="{{ d.id }}">{{ d.nome }}</option>
-                            {% endif %}
+                            <option value="{{ d.id }}" {% if departamento.parent_id == d.id %}selected{% endif %}>
+                                {{ d.nome }}
+                            </option>
                         {% endfor %}
                     </select>
                 </div>
@@ -52,8 +46,11 @@
 
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-success px-5 fw-bold shadow">
-                        <i class="fas fa-save me-2"></i>Salvar Departamento
+                        <i class="fas fa-save me-2"></i>Salvar Alterações
                     </button>
+                    <a href="{% url 'departamento_view' %}" class="btn btn-outline-secondary px-5 fw-bold">
+                        Voltar
+                    </a>
                 </div>
             </form>
         </div>

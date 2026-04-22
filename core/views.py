@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
@@ -29,8 +31,36 @@ def funcionarios_view(request):
 
 
 def funcionario_update(request, id):
+    # Busca o funcionário ou retorna 404 se não existir
     funcionario = get_object_or_404(Funcionario, id=id)
-    return render(request, 'core/funcionario/form.html', {'funcionario': funcionario})
+    
+    if request.method == 'POST':
+        # Se o usuário clicou em salvar, atualizamos o objeto
+        funcionario.nome = request.POST.get('nome')
+        funcionario.email = request.POST.get('email')
+        funcionario.telefone = request.POST.get('telefone')
+        funcionario.data_nascimento = request.POST.get('data_nascimento')
+        funcionario.data_admissao = request.POST.get('data_admissao')
+        funcionario.dependentes = request.POST.get('dependentes') or 0
+        funcionario.endereco_completo = request.POST.get('endereco_completo')
+        funcionario.cargo_id = request.POST.get('cargo')
+        funcionario.salario_base = request.POST.get('salario_base') or 0
+        
+        funcionario.save()
+        
+        # Sincroniza o e-mail no User do sistema
+        funcionario.user.email = funcionario.email
+        funcionario.user.save()
+        
+        messages.success(request, "Dados atualizados com sucesso!")
+        return redirect('funcionarios_view')
+
+    # No GET, enviamos o funcionário e a lista de cargos para o template
+    cargos = Cargo.objects.all().order_by('nome')
+    return render(request, 'core/funcionario/form.html', {
+        'funcionario': funcionario,
+        'cargos': cargos
+    })
 
 def funcionario_delete(request, id):
     funcionario = get_object_or_404(Funcionario, id=id)
@@ -126,10 +156,23 @@ def cargo_create(request):
     
     departamentos = Departamento.objects.all()
     return render(request, 'core/cargo/form.html', {'departamentos': departamentos})
-
 def cargo_update(request, id):
     cargo = get_object_or_404(Cargo, id=id)
-    return render(request, 'core/cargo/form.html', {'cargo': cargo})
+    
+    if request.method == 'POST':
+        cargo.nome = request.POST.get('nome')
+        cargo.nivel = request.POST.get('nivel') # Novo campo
+        cargo.carga_horaria = request.POST.get('carga_horaria') # Novo campo
+        cargo.departamento_id = request.POST.get('departamento')
+        
+        cargo.save()
+        return redirect('cargos_view')
+
+    departamentos = Departamento.objects.all().order_by('nome')
+    return render(request, 'core/cargo/form.html', {
+        'cargo': cargo, 
+        'departamentos': departamentos
+    })
 
 def cargo_delete(request, id):
     get_object_or_404(Cargo, id=id).delete()
@@ -189,18 +232,25 @@ def evento_create(request):
     
     return render(request, 'core/evento/form.html')
 
-# EDITAR EVENTO
 def evento_update(request, id):
     evento = get_object_or_404(Evento, id=id)
     
     if request.method == "POST":
-        evento.nome = request.POST.get('nome_evento')
+        evento.nome = request.POST.get('nome')
         evento.tipo = request.POST.get('tipo')
-        evento.valor_padrao = request.POST.get('valor')
+        
+        # Capturando os valores numéricos
+        percentual = request.POST.get('percentual')
+        valor_fixo = request.POST.get('valor_fixo')
+        
+        # Tratamento para não salvar string vazia em campo Decimal/Float
+        evento.percentual = percentual if percentual else None
+        evento.valor_fixo = valor_fixo if valor_fixo else None
+        
         evento.save()
-        return redirect('eventos_view')
+        return redirect('eventos_list')
 
-    return render(request, 'core/evento/form.html', {'evento': evento, 'editando': True})
+    return render(request, 'core/evento/form.html', {'evento': evento})
 
 # EXCLUIR EVENTO
 def evento_delete(request, id):
@@ -324,20 +374,22 @@ def get_funcionario(request, id):
     return JsonResponse(data)
 
 def departamento_update(request, id):
-    depto = get_object_or_404(Departamento, id=id)
+    # Alterado de 'depto' para 'departamento' para bater com seu HTML
+    departamento = get_object_or_404(Departamento, id=id)
     
     if request.method == 'POST':
-        depto.nome = request.POST.get('nome')
-        depto.descricao = request.POST.get('descricao')
+        departamento.nome = request.POST.get('nome')
+        departamento.descricao = request.POST.get('descricao')
         parent_id = request.POST.get('parent_id')
-        depto.parent_id = parent_id if parent_id else None
+        departamento.parent_id = parent_id if parent_id else None
         
-        depto.save()
+        departamento.save()
         return redirect('departamento_view')
 
-    departamentos = Departamento.objects.exclude(id=id) # Evita que um depto seja pai de si mesmo
+    # Busca todos os departamentos exceto o atual
+    departamentos = Departamento.objects.exclude(id=id) 
     return render(request, 'core/departamento/form.html', {
-        'depto': depto, 
+        'departamento': departamento, 
         'departamentos': departamentos
     })
 

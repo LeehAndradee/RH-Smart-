@@ -28,7 +28,7 @@
                         <tr>
                             <td class="ps-4 align-middle fw-bold">{{ evento.nome }}</td>
                             <td class="align-middle">
-                                {% if evento.tipo == 'P' %}
+                                {% if evento.tipo == 'PROVENTO' %}
                                     <span class="badge bg-success-subtle text-success border border-success">
                                         <i class="fas fa-arrow-up small"></i> Provento
                                     </span>
@@ -39,7 +39,7 @@
                                 {% endif %}
                             </td>
                             <td class="align-middle">
-                                R$ {{ evento.valor_fixo|default:"0.00" }}
+                               R$ {{ evento.valor_fixo|default:"0.00" }}
                             </td>
                             <td class="text-center pe-4 align-middle">
                                 <div class="btn-group" role="group">
