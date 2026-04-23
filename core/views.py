@@ -5,8 +5,9 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
 from .models import Funcionario, Cargo, Departamento, FolhaPagamento, Evento, Falta
 from django.contrib.auth.models import User
-from .models import Funcionario, Evento, FolhaPagamento, ItemFolha  # Adicione ItemFolha aqui
+from .models import Funcionario, Evento, FolhaPagamento, ItemFolha 
 from django.contrib import messages
+from django.shortcuts import render, get_object_or_404
 
 # --- HELPER DE PERMISSÃO ---
 def e_rh(user):
@@ -421,3 +422,7 @@ def departamento_delete(request, id):
     depto = get_object_or_404(Departamento, id=id)
     depto.delete()
     return redirect('departamento_view')
+
+def imprimir_holerite(request, folha_id):
+    folha = get_object_or_404(FolhaPagamento, id=folha_id)
+    return render(request, 'core/folha/folha_impressao.html', {'folha': folha})

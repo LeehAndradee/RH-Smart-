@@ -6,7 +6,10 @@
         <div class="col-lg-10">
             <div class="card shadow-lg border-0" style="border-radius: 1rem;">
                 <div class="card-header bg-dark text-white p-4" style="border-radius: 1rem 1rem 0 0;">
-                    <h4 class="mb-0"><i class="fas fa-calculator me-2 text-success"></i>Gerar Folha de Pagamento</h4>
+                    <h4 class="mb-0">
+                        <i class="fas fa-calculator me-2 text-success"></i>
+                        {% if folha %}Editar{% else %}Gerar{% endif %} Folha de Pagamento
+                    </h4>
                 </div>
 
                 <div class="card-body p-4 p-md-5">
@@ -16,9 +19,11 @@
                         <div class="mb-4">
                             <label class="form-label fw-bold text-muted small">COLABORADOR</label>
                             <select name="funcionario" class="form-select form-select-lg border-2 shadow-sm" required>
-                                <option value="" selected disabled>Selecione o funcionário...</option>
+                                <option value="" disabled {% if not folha %}selected{% endif %}>Selecione o funcionário...</option>
                                 {% for f in funcionarios %}
-                                    <option value="{{ f.id }}">{{ f.nome }}</option>
+                                    <option value="{{ f.id }}" {% if folha.funcionario.id == f.id %}selected{% endif %}>
+                                        {{ f.nome }}
+                                    </option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -26,19 +31,19 @@
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
                                 <label class="form-label fw-bold small">MÊS</label>
-                                <input type="number" name="mes" class="form-control" value="4" required>
+                                <input type="number" name="mes" class="form-control" value="{{ folha.mes|default:4 }}" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-bold small">ANO</label>
-                                <input type="number" name="ano" class="form-control" value="2026" required>
+                                <input type="number" name="ano" class="form-control" value="{{ folha.ano|default:2026 }}" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-bold small text-primary">TIPO DE FOLHA</label>
                                 <select name="tipo" id="id_tipo" class="form-select border-primary fw-bold" required>
-                                    <option value="MENSAL">Mensal</option>
-                                    <option value="FERIAS">Férias</option>
-                                    <option value="DECIMO">13º Salário</option>
-                                    <option value="RESCISAO">Rescisão</option>
+                                    <option value="MENSAL" {% if folha.tipo == 'MENSAL' %}selected{% endif %}>Mensal</option>
+                                    <option value="FERIAS" {% if folha.tipo == 'FERIAS' %}selected{% endif %}>Férias</option>
+                                    <option value="DECIMO" {% if folha.tipo == 'DECIMO' or folha.tipo == '13_SALARIO' %}selected{% endif %}>13º Salário</option>
+                                    <option value="RESCISAO" {% if folha.tipo == 'RESCISAO' %}selected{% endif %}>Rescisão</option>
                                 </select>
                             </div>
                         </div>
@@ -48,20 +53,20 @@
                             
                             <div id="campo-ferias" style="display: none;">
                                 <label class="form-label small">Dias de Férias:</label>
-                                <input type="number" name="dias_gozo_ferias" class="form-control w-50" value="30">
+                                <input type="number" name="dias_gozo_ferias" class="form-control w-50" value="{{ folha.dias_gozo_ferias|default:30 }}">
                             </div>
 
                             <div id="campo-rescisao" style="display: none;">
                                 <label class="form-label small">Data de Desligamento:</label>
-                                <input type="date" name="data_rescisao" class="form-control w-50">
+                                <input type="date" name="data_rescisao" class="form-control w-50" value="{{ folha.data_rescisao|date:'Y-m-d' }}">
                             </div>
 
                             <div id="campo-decimo" style="display: none;">
                                 <label class="form-label small">Parcela do 13º:</label>
                                 <select name="parcela_13o" class="form-select w-50 border-info">
-                                    <option value="1">1ª Parcela (50% sem descontos)</option>
-                                    <option value="2">2ª Parcela (Com descontos totais)</option>
-                                    <option value="0">Parcela Única (Integral)</option>
+                                    <option value="1" {% if folha.parcela_13o == 1 %}selected{% endif %}>1ª Parcela (50% sem descontos)</option>
+                                    <option value="2" {% if folha.parcela_13o == 2 %}selected{% endif %}>2ª Parcela (Com descontos totais)</option>
+                                    <option value="0" {% if folha.parcela_13o == 0 %}selected{% endif %}>Parcela Única (Integral)</option>
                                 </select>
                             </div>
                         </div>
@@ -83,14 +88,39 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        </tbody>
+                                        {% if folha %}
+                                            {% for item in folha.itens.all %}
+                                            <tr>
+                                                <td>
+                                                    <select name="evento_id[]" class="form-select border-0 select-evento" required>
+                                                        {% for e in eventos %}
+                                                            <option value="{{ e.id }}" {% if item.evento.id == e.id %}selected{% endif %} data-valor="{{ e.valor_fixo|stringformat:'.2f' }}">
+                                                                {{ e.nome }} ({% if e.tipo == 'P' %}P{% else %}D{% endif %})
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <input type="number" step="0.01" name="evento_valor[]" class="form-control border-0 bg-light input-valor" value="{{ item.valor|stringformat:'.2f'|safe }}" required>
+                                                </td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-link text-danger p-0" onclick="this.closest('tr').remove()">
+                                                        <i class="fas fa-times-circle"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
 
                         <div class="mt-5 d-flex justify-content-between">
                             <a href="{% url 'folha_view' %}" class="btn btn-outline-secondary px-4">Cancelar</a>
-                            <button type="submit" class="btn btn-success btn-lg px-5 shadow">Gerar Folha</button>
+                            <button type="submit" class="btn btn-success btn-lg px-5 shadow">
+                                {% if folha %}Salvar Alterações{% else %}Gerar Folha{% endif %}
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -100,7 +130,6 @@
 </div>
 
 <script>
-    // --- LÓGICA DE CAMPOS DINÂMICOS (MENSAL/RESCISÃO/ETC) ---
     const tipoSelect = document.getElementById('id_tipo');
     const secao = document.getElementById('secao-dinamica');
     const fers = document.getElementById('campo-ferias');
@@ -108,17 +137,21 @@
     const deci = document.getElementById('campo-decimo');
     const titu = document.getElementById('titulo-dinamico');
 
-    tipoSelect.addEventListener('change', function() {
+    function gerenciarCamposDinamicos() {
         secao.style.display = 'none'; fers.style.display = 'none'; resc.style.display = 'none'; deci.style.display = 'none';
-        if (this.value !== 'MENSAL') {
+        if (tipoSelect.value !== 'MENSAL') {
             secao.style.display = 'block';
-            if (this.value === 'FERIAS') { fers.style.display = 'block'; titu.innerText = 'Detalhes de Férias'; }
-            else if (this.value === 'RESCISAO') { resc.style.display = 'block'; titu.innerText = 'Detalhes de Rescisão'; }
-            else if (this.value === 'DECIMO') { deci.style.display = 'block'; titu.innerText = 'Configuração do 13º Salário'; }
+            if (tipoSelect.value === 'FERIAS') { fers.style.display = 'block'; titu.innerText = 'Detalhes de Férias'; }
+            else if (tipoSelect.value === 'RESCISAO') { resc.style.display = 'block'; titu.innerText = 'Detalhes de Rescisão'; }
+            else if (tipoSelect.value === 'DECIMO') { deci.style.display = 'block'; titu.innerText = 'Configuração do 13º Salário'; }
         }
-    });
+    }
 
-    // --- LÓGICA DE ADICIONAR EVENTOS EXTRAS ---
+    tipoSelect.addEventListener('change', gerenciarCamposDinamicos);
+    
+    // Dispara ao carregar para caso de edição
+    window.onload = gerenciarCamposDinamicos;
+
     document.getElementById('btn-add-evento').addEventListener('click', function() {
         const tbody = document.querySelector('#tabela-eventos tbody');
         const tr = document.createElement('tr');
@@ -145,7 +178,6 @@
         `;
         tbody.appendChild(tr);
 
-        // Auto-preenchimento do valor base
         const select = tr.querySelector('.select-evento');
         select.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];

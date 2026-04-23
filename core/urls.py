@@ -37,6 +37,8 @@ urlpatterns = [
     path('faltas/', views.faltas_view, name='faltas_list'),
     path('faltas/nova/', views.cadastrar_falta, name='falta_create'),
 
+    path('folha/<int:folha_id>/imprimir/', views.imprimir_holerite, name='imprimir_holerite'),
+    
     # --- API ---
     path('api/funcionario/<int:id>/', views.get_funcionario, name='api_get_funcionario'),
 ]
