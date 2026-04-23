@@ -1,26 +1,30 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div>
-    {% if not folha.fechada %}
-        <a href="{% url 'folha_fechar' folha.id %}" class="btn btn-success">
-    ✅ Fechar Folha
-        </a>
-        <button class="btn btn-secondary ms-2" disabled title="Feche a folha para emitir o holerite">
-            🖨️ Holerite Bloqueado
-        </button>
-    {% else %}
-        <span class="badge bg-success fs-6 me-2 p-2">Folha Fechada</span>
-        <a href="{% url 'imprimir_holerite' folha.id %}" target="_blank" class="btn btn-primary">
-            🖨️ Gerar Holerite Oficial
-        </a>
-    {% endif %}
-</div>
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            {% if not folha.fechada %}
+                <a href="{% url 'folha_fechar' folha.id %}" class="btn btn-success shadow-sm">
+                    <i class="fas fa-check-circle me-1"></i> Fechar Folha
+                </a>
+                <button class="btn btn-secondary ms-2" disabled title="Feche a folha para emitir o holerite">
+                    <i class="fas fa-lock me-1"></i> Holerite Bloqueado
+                </button>
+            {% else %}
+                <span class="badge bg-success fs-6 me-2 p-2 px-3 shadow-sm"><i class="fas fa-file-contract me-1"></i> Folha Fechada</span>
+                <a href="{% url 'imprimir_holerite' folha.id %}" target="_blank" class="btn btn-primary shadow-sm">
+                    <i class="fas fa-print me-1"></i> Gerar Holerite Oficial
+                </a>
+            {% endif %}
+        </div>
+        <a href="{% url 'folha_view' %}" class="btn btn-outline-secondary">Voltar</a>
+    </div>
 
     <div class="row">
         <div class="col-md-6">
-            <div class="card p-4 mb-3 shadow-sm">
-                <h5 class="border-bottom pb-2">👤 Informações do Colaborador</h5>
+            <div class="card p-4 mb-3 shadow-sm border-0">
+                <h5 class="border-bottom pb-2 text-muted fw-bold">👤 Informações do Colaborador</h5>
                 <p><strong>Nome:</strong> {{ folha.funcionario.nome }}</p>
                 <p><strong>CPF:</strong> {{ folha.funcionario.cpf|default:"Não informado" }}</p>
                 <p><strong>Telefone:</strong> {{ folha.funcionario.telefone|default:"Não informado" }}</p>
@@ -29,17 +33,44 @@
         </div>
 
         <div class="col-md-6">
-            <div class="card p-4 mb-3 shadow-sm">
-                <h5 class="border-bottom pb-2">📅 Detalhes do Período</h5>
-                <p><strong>Tipo de Folha:</strong> {{ folha.tipo }}</p>
+            <div class="card p-4 mb-3 shadow-sm border-0">
+                <h5 class="border-bottom pb-2 text-muted fw-bold">📅 Detalhes do Período</h5>
+                <p><strong>Tipo de Folha:</strong> <span class="badge bg-info text-dark">{{ folha.get_tipo_display|default:folha.tipo }}</span></p>
                 <p><strong>Competência:</strong> {{ folha.mes }}/{{ folha.ano }}</p>
                 <p><strong>Salário Base (Momento):</strong> R$ {{ folha.salario_base_Snapshot|floatformat:2 }}</p>
+                <p><strong>Status:</strong> {% if folha.fechada %}Fechada{% else %}Em Aberto{% endif %}</p>
             </div>
         </div>
     </div>
 
-    <div class="card p-4 mb-3 shadow-sm">
-        <h5 class="border-bottom pb-2">📋 Demonstrativo de Verbas</h5>
+    {% if folha.tipo != 'MENSAL' %}
+    <div class="card p-4 mb-3 shadow-sm border-start border-4 {% if folha.tipo == 'FERIAS' %}border-primary{% elif folha.tipo == 'RESCISAO' %}border-danger{% else %}border-info{% endif %}">
+        <h5 class="fw-bold mb-3">
+            {% if folha.tipo == 'FERIAS' %}<i class="fas fa-umbrella-beach text-primary"></i> Detalhes de Férias
+            {% elif folha.tipo == 'RESCISAO' %}<i class="fas fa-user-slash text-danger"></i> Detalhes de Rescisão
+            {% else %}<i class="fas fa-gift text-info"></i> Detalhes de 13º Salário{% endif %}
+        </h5>
+        <div class="row">
+            {% if folha.tipo == 'FERIAS' %}
+                <div class="col-md-4"><strong>Dias de Gozo:</strong> {{ folha.dias_gozo_ferias|default:30 }}</div>
+                <div class="col-md-4"><strong>Abono Pecuniário:</strong> {% if folha.abono_pecuniario %}Sim (10 dias){% else %}Não{% endif %}</div>
+                <div class="col-md-4"><strong>1/3 Constitucional:</strong> R$ {{ folha.terco_constitucional|floatformat:2|default:"0,00" }}</div>
+
+            {% elif folha.tipo == 'RESCISAO' %}
+                <div class="col-md-4"><strong>Data de Desligamento:</strong> {{ folha.data_rescisao|date:"d/m/Y" }}</div>
+                <div class="col-md-8"><strong>Motivo:</strong> {{ folha.motivo_rescisao|capfirst }}</div>
+
+            {% elif folha.tipo == 'DECIMO' %}
+                <div class="col-md-6">
+                    <strong>Parcela:</strong> {{ folha.get_parcela_13o_display|default:"-" }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card p-4 mb-3 shadow-sm border-0">
+        <h5 class="border-bottom pb-2 text-muted fw-bold">📋 Demonstrativo de Verbas</h5>
         <table class="table table-striped table-hover mt-3">
             <thead class="table-light">
                 <tr>
@@ -51,17 +82,49 @@
             </thead>
             <tbody>
                 <tr>
-                    <td>Salário Base</td>
+                    <td>
+                        {% if folha.tipo == 'FERIAS' %}
+                            Férias Gozadas ({{ folha.dias_gozo_ferias|default:30 }} dias)
+                        {% elif folha.tipo == 'RESCISAO' %}
+                            Saldo de Salário ({{ folha.data_rescisao.day }} dias)
+                        {% elif folha.tipo == 'DECIMO' %}
+                            13º Salário 
+                            {% if folha.parcela_13o is not None %}
+                                ({{ folha.get_parcela_13o_display }})
+                            {% endif %}
+                        {% else %}
+                            Salário Base
+                        {% endif %}
+                    </td>
                     <td>Provento</td>
-                    <td class="text-end">{{ folha.salario_base_Snapshot|floatformat:2 }}</td>
+                    <td class="text-end">
+                        {% if folha.tipo == 'FERIAS' %}
+                            {{ folha.valor_ferias_bruto|floatformat:2 }}
+                        {% elif folha.tipo == 'RESCISAO' %}
+                            {{ folha.saldo_salario_rescisao|floatformat:2 }}
+                        {% elif folha.tipo == 'DECIMO' %}
+                            {{ folha.salario_bruto|floatformat:2 }}
+                        {% else %}
+                            {{ folha.salario_base_Snapshot|floatformat:2 }}
+                        {% endif %}
+                    </td>
                     <td class="text-end">-</td>
                 </tr>
+
+                {% if folha.tipo == 'FERIAS' and folha.terco_constitucional > 0 %}
+                <tr>
+                    <td>1/3 Constitucional de Férias</td>
+                    <td>Provento</td>
+                    <td class="text-end text-success">{{ folha.terco_constitucional|floatformat:2 }}</td>
+                    <td class="text-end">-</td>
+                </tr>
+                {% endif %}
 
                 {% for item in folha.itens.all %}
                 <tr>
                     <td>{{ item.evento.nome }}</td>
                     <td>{{ item.evento.tipo }}</td>
-                    {% if item.evento.tipo == 'PROVENTO' %}
+                    {% if item.evento.tipo == 'P' %}
                         <td class="text-end text-success">{{ item.valor|floatformat:2 }}</td>
                         <td class="text-end">-</td>
                     {% else %}
@@ -85,7 +148,7 @@
                 </tr>
             </tbody>
             <tfoot class="table-group-divider">
-                <tr class="fw-bold">
+                <tr class="fw-bold fs-5">
                     <td colspan="2" class="text-end">Totais:</td>
                     <td class="text-end text-success">R$ {{ folha.total_proventos|floatformat:2 }}</td>
                     <td class="text-end text-danger">R$ {{ folha.total_descontos|floatformat:2 }}</td>
@@ -94,15 +157,15 @@
         </table>
     </div>
 
-    <div class="card p-4 mb-3 shadow-sm bg-light">
+    <div class="card p-4 mb-3 shadow-sm bg-light border-0">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <p class="mb-1 text-muted">FGTS (Depósito do Mês): R$ {{ folha.fgts|floatformat:2 }}</p>
-                <small class="text-muted">* O FGTS não é descontado do salário líquido.</small>
+                <p class="mb-1 text-muted fw-bold">FGTS (Depósito do Mês): R$ {{ folha.fgts|floatformat:2 }}</p>
+                <small class="text-muted">* O FGTS é uma obrigação da empresa e não é descontado do colaborador.</small>
             </div>
             <div class="col-md-4 text-end">
                 <h6 class="text-muted mb-0">VALOR LÍQUIDO A RECEBER:</h6>
-                <h2 class="text-primary fw-bold">R$ {{ folha.salario_liquido|floatformat:2 }}</h2>
+                <h2 class="text-primary fw-bold display-6">R$ {{ folha.salario_liquido|floatformat:2 }}</h2>
             </div>
         </div>
     </div>

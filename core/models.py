@@ -85,6 +85,11 @@ class Evento(models.Model):
     percentual = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     valor_fixo = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
+    aplica_13 = models.BooleanField(default=False)
+    incide_inss = models.BooleanField(default=True)
+    incide_irrf = models.BooleanField(default=True)
+    incide_fgts = models.BooleanField(default=True)
+
     def __str__(self):
         return f"{self.nome} ({self.tipo})"
 
@@ -138,6 +143,10 @@ class FolhaPagamento(models.Model):
     salario_liquido = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     
     salario_bruto = models.DecimalField(max_digits=10, decimal_places=2)
+
+    valor_ferias_bruto = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    terco_constitucional = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    saldo_salario_rescisao = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     
     fechada = models.BooleanField(default=False)
     criado_em = models.DateTimeField(auto_now_add=True)
@@ -163,24 +172,39 @@ class FolhaPagamento(models.Model):
             dias = Decimal(str(self.dias_gozo_ferias or 30))
             valor_ferias = (self.salario_base_Snapshot / 30) * dias
             bruto = valor_ferias + (valor_ferias / 3)
+   
+            self.valor_ferias_bruto = (self.salario_base_Snapshot / 30) * dias
+            self.terco_constitucional = self.valor_ferias_bruto / 3
+            bruto = self.valor_ferias_bruto + self.terco_constitucional
 
         elif self.tipo == 'DECIMO':
             if self.parcela_13o == 1:
                 bruto = self.salario_base_Snapshot / 2
-                descontos_legais_ativos = False # 1ª parcela não desconta INSS/IRRF
+                descontos_legais_ativos = False
+
+            elif self.parcela_13o == 2:
+                bruto = self.salario_base_Snapshot  # usa o total
+
             else:
-                bruto = self.salario_base_Snapshot # Parcela Única ou 2ª
+                bruto = self.salario_base_Snapshot
+
+            if self.tipo == 'DECIMO' and self.parcela_13o == 2:
+                self.salario_liquido -= (self.salario_base_Snapshot / 2)
 
         elif self.tipo == 'RESCISAO' and self.data_rescisao:
             dias_trabalhados = Decimal(str(self.data_rescisao.day))
-            bruto = (self.salario_base_Snapshot / 30) * dias_trabalhados
+            self.saldo_salario_rescisao = (self.salario_base_Snapshot / 30) * dias_trabalhados # <-- Adicione esta linha
+            bruto = self.saldo_salario_rescisao
 
         # 3. Processa Itens Extras (Eventos/Adicionais)
         descontos_adicionais = Decimal('0')
         # Buscamos os itens relacionados (Related Name 'itens')
         if self.pk:
             for item in self.itens.all():
-                if item.evento.tipo == 'PROVENTO':
+                if self.tipo == 'DECIMO' and not item.evento.aplica_13:
+                    continue
+
+                if item.evento.tipo == 'P':
                     bruto += item.valor
                 else:
                     descontos_adicionais += item.valor
@@ -210,12 +234,20 @@ class FolhaPagamento(models.Model):
             self.inss = Decimal('0')
             self.irrf = Decimal('0')
 
-        self.fgts = bruto * Decimal('0.08')
+        if self.tipo == 'DECIMO' and self.parcela_13o == 1:
+            self.fgts = Decimal('0')
+        else:
+            self.fgts = bruto * Decimal('0.08')
 
         # 6. Totais Finais
         self.total_proventos = bruto
         self.total_descontos = self.inss + self.irrf + descontos_adicionais
         self.salario_liquido = self.total_proventos - self.total_descontos
+
+
+        # ✅ AJUSTE DA 2ª PARCELA DO 13º
+        if self.tipo == 'DECIMO' and self.parcela_13o == 2:
+            self.salario_liquido -= (self.salario_base_Snapshot / 2)
 
     def calc_inss(self, salario):
         if salario <= 1518.00: return salario * Decimal('0.075')
@@ -230,8 +262,6 @@ class FolhaPagamento(models.Model):
     def save(self, *args, **kwargs):
         # 1. Se a folha é nova (ainda não tem ID), buscamos o salário AGORA
         if not self.pk:
-            # Aqui buscamos o valor direto do cadastro do funcionário
-            # Isso garante que o banco não receba um valor 'null'
             self.salario_base_Snapshot = self.funcionario.salario_base
             self.salario_bruto = self.funcionario.salario_base
         

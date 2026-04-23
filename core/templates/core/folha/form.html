@@ -52,13 +52,36 @@
                             <h6 class="fw-bold mb-3" id="titulo-dinamico">Configurações Adicionais</h6>
                             
                             <div id="campo-ferias" style="display: none;">
-                                <label class="form-label small">Dias de Férias:</label>
-                                <input type="number" name="dias_gozo_ferias" class="form-control w-50" value="{{ folha.dias_gozo_ferias|default:30 }}">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label small">Dias de Gozo:</label>
+                                        <input type="number" name="dias_gozo_ferias" class="form-control" value="{{ folha.dias_gozo_ferias|default:30 }}">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label small">Abono Pecuniário (Vender 10 dias?):</label>
+                                        <select name="abono_pecuniario" class="form-select">
+                                            <option value="False" {% if not folha.abono_pecuniario %}selected{% endif %}>Não</option>
+                                            <option value="True" {% if folha.abono_pecuniario %}selected{% endif %}>Sim</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
 
                             <div id="campo-rescisao" style="display: none;">
-                                <label class="form-label small">Data de Desligamento:</label>
-                                <input type="date" name="data_rescisao" class="form-control w-50" value="{{ folha.data_rescisao|date:'Y-m-d' }}">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label small">Data de Desligamento:</label>
+                                        <input type="date" name="data_rescisao" class="form-control" value="{{ folha.data_rescisao|date:'Y-m-d' }}">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label small">Motivo:</label>
+                                        <select name="motivo_rescisao" class="form-select">
+                                            <option value="SEM_JUSTA_CAUSA" {% if folha.motivo_rescisao == 'SEM_JUSTA_CAUSA' %}selected{% endif %}>Sem Justa Causa</option>
+                                            <option value="PEDIDO_DEMISSAO" {% if folha.motivo_rescisao == 'PEDIDO_DEMISSAO' %}selected{% endif %}>Pedido de Demissão</option>
+                                            <option value="COM_JUSTA_CAUSA" {% if folha.motivo_rescisao == 'COM_JUSTA_CAUSA' %}selected{% endif %}>Com Justa Causa</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
 
                             <div id="campo-decimo" style="display: none;">
@@ -139,18 +162,27 @@
 
     function gerenciarCamposDinamicos() {
         secao.style.display = 'none'; fers.style.display = 'none'; resc.style.display = 'none'; deci.style.display = 'none';
-        if (tipoSelect.value !== 'MENSAL') {
+        
+        const valor = tipoSelect.value;
+        if (valor !== 'MENSAL') {
             secao.style.display = 'block';
-            if (tipoSelect.value === 'FERIAS') { fers.style.display = 'block'; titu.innerText = 'Detalhes de Férias'; }
-            else if (tipoSelect.value === 'RESCISAO') { resc.style.display = 'block'; titu.innerText = 'Detalhes de Rescisão'; }
-            else if (tipoSelect.value === 'DECIMO') { deci.style.display = 'block'; titu.innerText = 'Configuração do 13º Salário'; }
+            if (valor === 'FERIAS') { 
+                fers.style.display = 'block'; 
+                titu.innerHTML = '<i class="fas fa-umbrella-beach text-primary"></i> Detalhes de Férias'; 
+            }
+            else if (valor === 'RESCISAO') { 
+                resc.style.display = 'block'; 
+                titu.innerHTML = '<i class="fas fa-user-slash text-danger"></i> Detalhes de Rescisão'; 
+            }
+            else if (valor === 'DECIMO' || valor === '13_SALARIO') { 
+                deci.style.display = 'block'; 
+                titu.innerHTML = '<i class="fas fa-gift text-info"></i> Configuração do 13º Salário'; 
+            }
         }
     }
 
     tipoSelect.addEventListener('change', gerenciarCamposDinamicos);
-    
-    // Dispara ao carregar para caso de edição
-    window.onload = gerenciarCamposDinamicos;
+    window.addEventListener('load', gerenciarCamposDinamicos);
 
     document.getElementById('btn-add-evento').addEventListener('click', function() {
         const tbody = document.querySelector('#tabela-eventos tbody');

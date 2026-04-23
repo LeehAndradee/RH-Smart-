@@ -304,35 +304,38 @@ def folha_create(request):
 
         funcionario = get_object_or_404(Funcionario, id=funcionario_id)
 
-        # 1. Criamos a folha base
+        # ✅ PRIMEIRO: pega a parcela
+        valor_parcela = request.POST.get('parcela_13o')
+        parcela = int(valor_parcela) if valor_parcela else None
+
+        # ✅ AGORA sim pode usar
         nova_folha = FolhaPagamento(
             funcionario=funcionario,
             mes=mes,
             ano=ano,
             tipo=tipo,
+            parcela_13o=parcela,  # ✔ agora funciona
             fechada=False
         )
-        nova_folha.save() # Dispara o cálculo inicial (Salário, INSS, etc)
+        nova_folha.save()
 
-        # 2. Capturamos os Eventos Extras que vieram da tabela dinâmica do HTML
+        # Eventos
         eventos_ids = request.POST.getlist('evento_id[]')
         eventos_valores = request.POST.getlist('evento_valor[]')
 
         for eid, valor in zip(eventos_ids, eventos_valores):
-            if eid and valor: # Só salva se tiver ID e Valor
+            if eid and valor:
                 ItemFolha.objects.create(
                     folha=nova_folha,
                     evento_id=eid,
-                    valor=valor.replace(',', '.') # Garante ponto decimal
+                    valor=valor.replace(',', '.')
                 )
-        
-        # 3. Recalcula após inserir os itens extras para atualizar o Líquido
+
         nova_folha.calcular_tudo()
         nova_folha.save()
-        
+
         return redirect('folha_detail', id=nova_folha.id)
 
-    # Precisamos enviar os funcionários e os eventos para o formulário
     context = {
         'funcionarios': Funcionario.objects.all().order_by('nome'),
         'eventos': Evento.objects.all().order_by('nome')
