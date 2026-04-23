@@ -5,6 +5,8 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
 from .models import Funcionario, Cargo, Departamento, FolhaPagamento, Evento, Falta
 from django.contrib.auth.models import User
+from .models import Funcionario, Evento, FolhaPagamento, ItemFolha  # Adicione ItemFolha aqui
+from django.contrib import messages
 
 # --- HELPER DE PERMISSÃO ---
 def e_rh(user):
@@ -210,23 +212,25 @@ def departamento_delete(request, id):
     return redirect('departamentos_view')
 
 
-# LISTAGEM DE EVENTOS
+# --- EVENTOS ---
 def eventos_view(request):
-    eventos = Evento.objects.all()
+    eventos = Evento.objects.all().order_by('nome')
     return render(request, 'core/evento/list.html', {'eventos': eventos})
 
 def evento_create(request):
     if request.method == "POST":
-        # PEGANDO OS DADOS DO HTML (Use 'nome', não 'nome_evento')
         nome = request.POST.get('nome') 
         tipo = request.POST.get('tipo')
-        valor = request.POST.get('valor')
+        # Pegando os nomes corretos do formulário
+        valor = request.POST.get('valor_fixo') 
+        percentual = request.POST.get('percentual')
 
-        # SALVANDO NO BANCO (Use 'valor_fixo' conforme seu log mostrou)
         Evento.objects.create(
             nome=nome,
             tipo=tipo,
-            valor_fixo=valor  
+            # Correção: usando as variáveis tratadas
+            valor_fixo=valor if valor else None, 
+            percentual=percentual if percentual else None
         )
         return redirect('eventos_list')
     
@@ -239,11 +243,10 @@ def evento_update(request, id):
         evento.nome = request.POST.get('nome')
         evento.tipo = request.POST.get('tipo')
         
-        # Capturando os valores numéricos
         percentual = request.POST.get('percentual')
         valor_fixo = request.POST.get('valor_fixo')
         
-        # Tratamento para não salvar string vazia em campo Decimal/Float
+        # Tratamento para evitar erro de string vazia no banco
         evento.percentual = percentual if percentual else None
         evento.valor_fixo = valor_fixo if valor_fixo else None
         
@@ -252,11 +255,11 @@ def evento_update(request, id):
 
     return render(request, 'core/evento/form.html', {'evento': evento})
 
-# EXCLUIR EVENTO
 def evento_delete(request, id):
     evento = get_object_or_404(Evento, id=id)
     evento.delete()
     return redirect('eventos_list')
+
 
 # --- FALTAS ---
 def faltas_view(request):
@@ -300,7 +303,7 @@ def folha_create(request):
 
         funcionario = get_object_or_404(Funcionario, id=funcionario_id)
 
-        # Criamos o objeto na memória primeiro (sem .create)
+        # 1. Criamos a folha base
         nova_folha = FolhaPagamento(
             funcionario=funcionario,
             mes=mes,
@@ -308,14 +311,32 @@ def folha_create(request):
             tipo=tipo,
             fechada=False
         )
+        nova_folha.save() # Dispara o cálculo inicial (Salário, INSS, etc)
+
+        # 2. Capturamos os Eventos Extras que vieram da tabela dinâmica do HTML
+        eventos_ids = request.POST.getlist('evento_id[]')
+        eventos_valores = request.POST.getlist('evento_valor[]')
+
+        for eid, valor in zip(eventos_ids, eventos_valores):
+            if eid and valor: # Só salva se tiver ID e Valor
+                ItemFolha.objects.create(
+                    folha=nova_folha,
+                    evento_id=eid,
+                    valor=valor.replace(',', '.') # Garante ponto decimal
+                )
         
-        # O .save() vai disparar o calcular_tudo que colocamos no model
-        nova_folha.save() 
+        # 3. Recalcula após inserir os itens extras para atualizar o Líquido
+        nova_folha.calcular_tudo()
+        nova_folha.save()
         
         return redirect('folha_detail', id=nova_folha.id)
 
-    funcionarios = Funcionario.objects.all().order_by('nome')
-    return render(request, 'core/folha/form.html', {'funcionarios': funcionarios})
+    # Precisamos enviar os funcionários e os eventos para o formulário
+    context = {
+        'funcionarios': Funcionario.objects.all().order_by('nome'),
+        'eventos': Evento.objects.all().order_by('nome')
+    }
+    return render(request, 'core/folha/form.html', context)
 
 def folha_detail(request, id):
     folha = get_object_or_404(FolhaPagamento, id=id)
@@ -329,7 +350,6 @@ def folha_detail(request, id):
 def folha_update(request, id):
     folha = get_object_or_404(FolhaPagamento, id=id)
 
-    # 🚫 Regra: não pode editar se estiver fechada
     if folha.fechada:
         from django.contrib import messages
         messages.error(request, "Folha já está fechada e não pode ser editada.")
@@ -339,12 +359,16 @@ def folha_update(request, id):
         folha.mes = int(request.POST.get('mes'))
         folha.ano = int(request.POST.get('ano'))
         folha.tipo = request.POST.get('tipo')
-
-        folha.save()  # 🔥 recalcula tudo automaticamente
-
+        # Aqui você também poderia atualizar os Itens da Folha se quiser
+        folha.save()
         return redirect('folha_detail', id=folha.id)
 
-    return render(request, 'core/folha/form.html', {'folha': folha})
+    context = {
+        'folha': folha,
+        'funcionarios': Funcionario.objects.all().order_by('nome'),
+        'eventos': Evento.objects.all().order_by('nome')
+    }
+    return render(request, 'core/folha/form.html', context)
 
 def folha_fechar(request, id):
     folha = get_object_or_404(FolhaPagamento, id=id)

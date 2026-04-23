@@ -63,7 +63,28 @@
                                     <option value="2">2ª Parcela (Com descontos totais)</option>
                                     <option value="0">Parcela Única (Integral)</option>
                                 </select>
-                                <div class="form-text text-info">A 1ª parcela não possui descontos de INSS/IRRF por lei.</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label fw-bold text-muted small">EVENTOS EXTRAS (PROVENTOS/DESCONTOS)</label>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="btn-add-evento">
+                                    <i class="fas fa-plus"></i> Adicionar Evento
+                                </button>
+                            </div>
+                            <div class="table-responsive rounded border shadow-sm">
+                                <table class="table table-hover mb-0" id="tabela-eventos">
+                                    <thead class="table-light text-muted small">
+                                        <tr>
+                                            <th>Evento</th>
+                                            <th style="width: 200px;">Valor (R$)</th>
+                                            <th style="width: 50px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        </tbody>
+                                </table>
                             </div>
                         </div>
 
@@ -79,6 +100,7 @@
 </div>
 
 <script>
+    // --- LÓGICA DE CAMPOS DINÂMICOS (MENSAL/RESCISÃO/ETC) ---
     const tipoSelect = document.getElementById('id_tipo');
     const secao = document.getElementById('secao-dinamica');
     const fers = document.getElementById('campo-ferias');
@@ -87,25 +109,52 @@
     const titu = document.getElementById('titulo-dinamico');
 
     tipoSelect.addEventListener('change', function() {
-        // Reset
-        secao.style.display = 'none';
-        fers.style.display = 'none';
-        resc.style.display = 'none';
-        deci.style.display = 'none';
-
+        secao.style.display = 'none'; fers.style.display = 'none'; resc.style.display = 'none'; deci.style.display = 'none';
         if (this.value !== 'MENSAL') {
             secao.style.display = 'block';
-            if (this.value === 'FERIAS') {
-                fers.style.display = 'block';
-                titu.innerText = 'Detalhes de Férias';
-            } else if (this.value === 'RESCISAO') {
-                resc.style.display = 'block';
-                titu.innerText = 'Detalhes de Rescisão';
-            } else if (this.value === 'DECIMO') {
-                deci.style.display = 'block';
-                titu.innerText = 'Configuração do 13º Salário';
-            }
+            if (this.value === 'FERIAS') { fers.style.display = 'block'; titu.innerText = 'Detalhes de Férias'; }
+            else if (this.value === 'RESCISAO') { resc.style.display = 'block'; titu.innerText = 'Detalhes de Rescisão'; }
+            else if (this.value === 'DECIMO') { deci.style.display = 'block'; titu.innerText = 'Configuração do 13º Salário'; }
         }
+    });
+
+    // --- LÓGICA DE ADICIONAR EVENTOS EXTRAS ---
+    document.getElementById('btn-add-evento').addEventListener('click', function() {
+        const tbody = document.querySelector('#tabela-eventos tbody');
+        const tr = document.createElement('tr');
+        
+        tr.innerHTML = `
+            <td>
+                <select name="evento_id[]" class="form-select border-0 select-evento" required>
+                    <option value="">Selecione um evento...</option>
+                    {% for e in eventos %}
+                        <option value="{{ e.id }}" data-valor="{{ e.valor_fixo|stringformat:'.2f' }}">
+                            {{ e.nome }} ({% if e.tipo == 'P' %}P{% else %}D{% endif %})
+                        </option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <input type="number" step="0.01" name="evento_valor[]" class="form-control border-0 bg-light input-valor" placeholder="0,00" required>
+            </td>
+            <td class="text-center">
+                <button type="button" class="btn btn-link text-danger p-0" onclick="this.closest('tr').remove()">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+
+        // Auto-preenchimento do valor base
+        const select = tr.querySelector('.select-evento');
+        select.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const valorFixo = selectedOption.getAttribute('data-valor');
+            const inputValor = tr.querySelector('.input-valor');
+            if (valorFixo && valorFixo !== "None") {
+                inputValor.value = valorFixo.replace(',', '.');
+            }
+        });
     });
 </script>
 {% endblock %}

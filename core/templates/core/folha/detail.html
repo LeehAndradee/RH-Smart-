@@ -1,51 +1,109 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📄 Detalhes da Folha de Pagamento</h2>
+        <div>
+            {% if not folha.fechada %}
+                <a href="/folha/{{ folha.id }}/fechar/" class="btn btn-success">
+                    ✅ Fechar Folha
+                </a>
+            {% else %}
+                <span class="badge bg-success fs-6">Folha Fechada</span>
+            {% endif %}
+            <button onclick="window.print()" class="btn btn-outline-secondary ms-2">🖨️ Imprimir</button>
+        </div>
+    </div>
 
-<h2>📄 Folha de Pagamento</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card p-4 mb-3 shadow-sm">
+                <h5 class="border-bottom pb-2">👤 Informações do Colaborador</h5>
+                <p><strong>Nome:</strong> {{ folha.funcionario.nome }}</p>
+                <p><strong>CPF:</strong> {{ folha.funcionario.cpf|default:"Não informado" }}</p>
+                <p><strong>Telefone:</strong> {{ folha.funcionario.telefone|default:"Não informado" }}</p>
+                <p><strong>Endereço:</strong> {{ folha.funcionario.endereco|default:"Não informado" }}</p>
+            </div>
+        </div>
 
-<div class="card p-4 mb-3">
-    <p><strong>Funcionário:</strong> {{ folha.funcionario.nome }}</p>
-    <p><strong>Tipo:</strong> {{ folha.tipo }}</p>
-    <p><strong>Período:</strong> {{ folha.mes }}/{{ folha.ano }}</p>
+        <div class="col-md-6">
+            <div class="card p-4 mb-3 shadow-sm">
+                <h5 class="border-bottom pb-2">📅 Detalhes do Período</h5>
+                <p><strong>Tipo de Folha:</strong> {{ folha.tipo }}</p>
+                <p><strong>Competência:</strong> {{ folha.mes }}/{{ folha.ano }}</p>
+                <p><strong>Salário Base (Momento):</strong> R$ {{ folha.salario_base_Snapshot|floatformat:2 }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card p-4 mb-3 shadow-sm">
+        <h5 class="border-bottom pb-2">📋 Demonstrativo de Verbas</h5>
+        <table class="table table-striped table-hover mt-3">
+            <thead class="table-light">
+                <tr>
+                    <th>Evento</th>
+                    <th>Tipo</th>
+                    <th class="text-end">Vencimentos (R$)</th>
+                    <th class="text-end">Descontos (R$)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Salário Base</td>
+                    <td>Provento</td>
+                    <td class="text-end">{{ folha.salario_base_Snapshot|floatformat:2 }}</td>
+                    <td class="text-end">-</td>
+                </tr>
+
+                {% for item in folha.itens.all %}
+                <tr>
+                    <td>{{ item.evento.nome }}</td>
+                    <td>{{ item.evento.tipo }}</td>
+                    {% if item.evento.tipo == 'PROVENTO' %}
+                        <td class="text-end text-success">{{ item.valor|floatformat:2 }}</td>
+                        <td class="text-end">-</td>
+                    {% else %}
+                        <td class="text-end">-</td>
+                        <td class="text-end text-danger">{{ item.valor|floatformat:2 }}</td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+
+                <tr>
+                    <td>INSS</td>
+                    <td>Desconto</td>
+                    <td class="text-end">-</td>
+                    <td class="text-end text-danger">{{ folha.inss|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>IRRF</td>
+                    <td>Desconto</td>
+                    <td class="text-end">-</td>
+                    <td class="text-end text-danger">{{ folha.irrf|floatformat:2 }}</td>
+                </tr>
+            </tbody>
+            <tfoot class="table-group-divider">
+                <tr class="fw-bold">
+                    <td colspan="2" class="text-end">Totais:</td>
+                    <td class="text-end text-success">R$ {{ folha.total_proventos|floatformat:2 }}</td>
+                    <td class="text-end text-danger">R$ {{ folha.total_descontos|floatformat:2 }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="card p-4 mb-3 shadow-sm bg-light">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <p class="mb-1 text-muted">FGTS (Depósito do Mês): R$ {{ folha.fgts|floatformat:2 }}</p>
+                <small class="text-muted">* O FGTS não é descontado do salário líquido.</small>
+            </div>
+            <div class="col-md-4 text-end">
+                <h6 class="text-muted mb-0">VALOR LÍQUIDO A RECEBER:</h6>
+                <h2 class="text-primary fw-bold">R$ {{ folha.salario_liquido|floatformat:2 }}</h2>
+            </div>
+        </div>
+    </div>
 </div>
-
-<div class="card p-4 mb-3">
-    <h5>Eventos</h5>
-
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Evento</th>
-                <th>Valor</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in itens %}
-            <tr>
-                <td>{{ item.evento.nome }}</td>
-                <td>R$ {{ item.valor }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<div class="card p-4 mb-3">
-    <h5>Resumo</h5>
-        <p>Bruto: R$ {{ folha.salario_bruto|floatformat:2 }}</p>
-        <p>INSS: R$ {{ folha.inss|floatformat:2 }}</p>
-        <p>IRRF: R$ {{ folha.irrf|floatformat:2 }}</p>
-        <p>FGTS: R$ {{ folha.fgts|floatformat:2 }}</p>
-        <h4>Líquido: R$ {{ folha.salario_liquido|floatformat:2 }}</h4>
-</div>
-
-{% if not folha.fechada %}
-    <a href="/folha/{{ folha.id }}/fechar/" class="btn btn-success">
-        ✅ Fechar Folha
-    </a>
-{% else %}
-    <span class="badge bg-success">Folha Fechada</span>
-{% endif %}
-
 {% endblock %}
