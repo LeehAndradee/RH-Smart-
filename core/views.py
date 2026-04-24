@@ -9,6 +9,7 @@ from .models import Funcionario, Evento, FolhaPagamento, ItemFolha
 from django.contrib import messages
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Count, Sum, Avg
+from django.contrib.auth.views import LoginView
 
 
 

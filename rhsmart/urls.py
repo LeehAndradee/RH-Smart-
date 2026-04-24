@@ -16,16 +16,21 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from core.views import dashboard_view
-from django.urls import path, include
+from core.views import dashboard_view # Importe sua view do dashboard
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
     
-    # 🔥 rota principal (abre o dashboard)
-    path('', dashboard_view),
+    # Rota da página inicial (o que deu o erro 404)
+    path('', dashboard_view, name='home'), 
 
-    # rotas do sistema
+    # Inclui as rotas do seu app core
     path('', include('core.urls')),
 ]
+
+# ESSENCIAL PARA A IMAGEM APARECER
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

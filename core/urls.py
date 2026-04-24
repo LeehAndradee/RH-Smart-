@@ -1,4 +1,5 @@
 from django.urls import path
+from django.contrib.auth import views as auth_views
 from . import views
 
 urlpatterns = [
@@ -38,7 +39,9 @@ urlpatterns = [
     path('faltas/nova/', views.cadastrar_falta, name='falta_create'),
 
     path('folha/<int:folha_id>/imprimir/', views.imprimir_holerite, name='imprimir_holerite'),
-    
+    path('login/', auth_views.LoginView.as_view(), name='login'),
+
     # --- API ---
     path('api/funcionario/<int:id>/', views.get_funcionario, name='api_get_funcionario'),
+    
 ]

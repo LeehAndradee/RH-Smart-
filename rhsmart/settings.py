@@ -118,7 +118,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
+# Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
+
+# Esta linha diz ao Django para procurar na pasta static do seu projeto
+STATICFILES_DIRS = [
+    BASE_DIR / 'core' / 'static',
+]
+
+# Pasta onde os arquivos ficam em produção (bom deixar configurado)
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -126,6 +135,6 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Configurações de Autenticação
-LOGIN_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/accounts/login/'
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'  # ou onde quiser
+LOGOUT_REDIRECT_URL = '/login/'
