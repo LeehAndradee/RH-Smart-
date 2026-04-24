@@ -1,64 +1,81 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+
+{% block page_title %}
+    {% if cargo %}Editar Cargo{% else %}Novo Cargo{% endif %}
+{% endblock %}
+
+{% block page_subtitle %}
+    Cadastro e gestão de cargos do sistema
+{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow border-0">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">{% if cargo %}<i class="fas fa-edit"></i> Editar Cargo{% else %}<i class="fas fa-plus"></i> Novo Cargo{% endif %}</h4>
-        </div>
-        <div class="card-body p-4">
-            <form method="post">
-                {% csrf_token %}
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Nome do Cargo:</label>
-                        <input type="text" name="nome" class="form-control"
-                               value="{{ cargo.nome|default:'' }}" required>
-                    </div>
+<div class="card shadow border-0">
+    <div class="card-body">
 
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Nível:</label>
-                        <input type="text" name="nivel" class="form-control"
-                               value="{{ cargo.nivel|default:'' }}" 
-                               placeholder="Ex: Júnior, Pleno, Sênior" required>
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- DADOS DO CARGO -->
+            <h6 class="text-secondary mb-3 fw-bold">Informações do Cargo</h6>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-secondary">Nome do Cargo</label>
+                    <input type="text" name="nome" class="form-control"
+                           value="{{ cargo.nome|default:'' }}" required>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-secondary">Nível</label>
+                    <input type="text" name="nivel" class="form-control"
+                           value="{{ cargo.nivel|default:'' }}"
+                           placeholder="Ex: Júnior, Pleno, Sênior" required>
+                </div>
+            </div>
+
+            <!-- CONFIGURAÇÕES -->
+            <h6 class="text-secondary mt-4 mb-3 fw-bold">Configurações</h6>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label text-secondary">Carga Horária</label>
+                    <div class="input-group">
+                        <input type="number" name="carga_horaria" class="form-control"
+                               value="{{ cargo.carga_horaria|default:220 }}" required>
+                        <span class="input-group-text">h/mês</span>
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold">Carga Horária (Mensal):</label>
-                        <div class="input-group">
-                            <input type="number" name="carga_horaria" class="form-control"
-                                   value="{{ cargo.carga_horaria|default:220 }}" required>
-                            <span class="input-group-text">horas</span>
-                        </div>
-                    </div>
-
-
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold">Departamento:</label>
-                        <select name="departamento" class="form-select" required>
-                            <option value="" disabled {% if not cargo %}selected{% endif %}>Selecione</option>
-                            {% for d in departamentos %}
-                                <option value="{{ d.id }}"
-                                    {% if cargo.departamento.id == d.id %}selected{% endif %}>
-                                    {{ d.nome }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                <div class="col-md-8 mb-3">
+                    <label class="form-label text-secondary">Departamento</label>
+                    <select name="departamento" class="form-select" required>
+                        <option value="">Selecione...</option>
+                        {% for d in departamentos %}
+                            <option value="{{ d.id }}"
+                                {% if cargo.departamento.id == d.id %}selected{% endif %}>
+                                {{ d.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
                 </div>
+            </div>
 
-                <div class="mt-4 d-flex gap-2">
-                    <button type="submit" class="btn btn-success px-4">
-                        <i class="fas fa-save"></i> Salvar Cargo
-                    </button>
-                    <a href="{% url 'cargos_view' %}" class="btn btn-outline-secondary px-4">Cancelar</a>
-                </div>
+            <!-- BOTÕES -->
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="fas fa-save"></i>
+                    {% if cargo %}Salvar{% else %}Cadastrar{% endif %}
+                </button>
 
-            </form>
-        </div>
+                <a href="{% url 'cargos_view' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+
+        </form>
+
     </div>
 </div>
+
 {% endblock %}

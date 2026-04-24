@@ -1,40 +1,112 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block content %}
+<div class="container mt-4">
 
-<h2 class="mb-4">💼 Cargos</h2>
+    <!-- TÍTULO + AÇÃO -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">Cargos</h2>
+        </div>
 
-<a href="/cargos/novo/" class="btn btn-success">+ Novo Cargo</a>
+        <a href="{% url 'cargo_create' %}" class="btn btn-primary shadow-sm">
+            <i class="fas fa-plus"></i> Novo Cargo
+        </a>
+    </div>
 
-<table class="table table-hover">
-    <thead class="table-dark">
-        <tr>
-            <th>Nome</th>
-            <th>Departamento</th>
-            <th>Nível</th>
-            <th>Carga Horária</th>
-        </tr>
-    </thead>
+    <!-- CARD -->
+    <div class="card shadow border-0">
+        <div class="card-body p-0">
 
-    <tbody>
-        {% for c in cargos %}
-        <tr>
-            <td>{{ c.nome }}</td>
-            <td>{{ c.departamento.nome }}</td>
-            <td>{{ c.nivel }}</td>
-            <td>{{ c.carga_horaria }}h</td>
-        </tr>
-        <td>
-            <a href="editar/{{ c.id }}/" class="btn btn-warning btn-sm">✏️ Editar</a>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
 
-            <a href="excluir/{{ c.id }}/"
-            class="btn btn-danger btn-sm"
-            onclick="return confirm('Tem certeza que deseja excluir?')">
-            🗑️ Excluir
-            </a>
-        </td>
-        {% endfor %}
-    </tbody>
-</table>
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Cargo</th>
+                            <th>Departamento</th>
+                            <th>Nível</th>
+                            <th>Carga Horária</th>
+                            <th class="text-center pe-4">Ações</th>
+                        </tr>
+                    </thead>
 
+                    <tbody>
+                        {% for c in cargos %}
+                        <tr>
+
+                            <!-- NOME DO CARGO -->
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center"
+                                         style="width:35px;height:35px;">
+                                        {{ c.nome|first }}
+                                    </div>
+
+                                    <div>
+                                        <div class="fw-bold">{{ c.nome }}</div>
+                                        <small class="text-muted">ID: {{ c.id }}</small>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- DEPARTAMENTO -->
+                            <td>
+                                <span class="badge bg-secondary-subtle text-secondary border">
+                                    <i class="fas fa-building me-1"></i>
+                                    {{ c.departamento.nome }}
+                                </span>
+                            </td>
+
+                            <!-- NÍVEL -->
+                            <td>
+                                <span class="badge bg-primary-subtle text-primary border border-primary">
+                                    <i class="fas fa-layer-group me-1"></i>
+                                    {{ c.nivel }}
+                                </span>
+                            </td>
+
+                            <!-- CARGA HORÁRIA -->
+                            <td>
+                                <i class="fas fa-clock text-muted me-1"></i>
+                                {{ c.carga_horaria }}h
+                            </td>
+
+                            <!-- AÇÕES -->
+                            <td class="text-center pe-4">
+                                <div class="btn-group">
+
+                                    <a href="{% url 'cargo_update' c.id %}"
+                                       class="btn btn-sm btn-outline-warning" title="Editar">
+                                        <i class="fas fa-edit me-1"></i> Editar
+                                    </a>
+
+                                    <a href="{% url 'cargo_delete' c.id %}"
+                                       class="btn btn-sm btn-outline-danger"
+                                       onclick="return confirm('Excluir o cargo {{ c.nome }}?')">
+                                        <i class="fas fa-trash me-1"></i> Excluir
+                                    </a>
+
+                                </div>
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="fas fa-briefcase fa-2x mb-2"></i>
+                                <p>Nenhum cargo cadastrado</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>
 {% endblock %}

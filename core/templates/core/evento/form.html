@@ -1,51 +1,175 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+
+{% block page_title %}
+    {% if evento.id %}Editar Evento{% else %}Novo Evento{% endif %}
+{% endblock %}
+
+{% block page_subtitle %}
+    Configure os dados do evento da folha de pagamento
+{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'eventos_list' %}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left"></i> Voltar
+</a>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow border-0">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">{% if evento.id %}Modificar Evento{% else %}Novo Evento{% endif %}</h4>
-        </div>
-        <div class="card-body">
-            <form method="post">
-                {% csrf_token %}
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Nome:</label>
-                    <input type="text" name="nome" class="form-control" 
-                           value="{{ evento.nome|default:'' }}" required>
-                </div>
+<div class="row">
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Tipo:</label>
-                    <select name="tipo" class="form-select" required>
-                        <option value="P" {% if evento.tipo == 'P' %}selected{% endif %}>Provento (+)</option>
-                        <option value="D" {% if evento.tipo == 'D' %}selected{% endif %}>Desconto (-)</option>
-                    </select>
-                </div>
+    <!-- FORM PRINCIPAL -->
+    <div class="col-md-8">
+        <div class="card shadow border-0">
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Percentual:</label>
-                        <input type="number" step="0.0001" name="percentual" class="form-control" 
-                               value="{{ evento.percentual|stringformat:'s'|default:'' }}" 
-                               placeholder="Ex: 5.0">
+            <div class="card-body">
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <!-- BLOCO: INFORMAÇÕES -->
+                    <h6 class="text-uppercase text-muted mb-3">
+                        <i class="fas fa-info-circle"></i> Informações do Evento
+                    </h6>
+
+                    <div class="row g-3 mb-4">
+
+                        <!-- NOME -->
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Nome do Evento</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text">
+                                    <i class="fas fa-tag"></i>
+                                </span>
+                                <input type="text" name="nome" class="form-control"
+                                       value="{{ evento.nome|default:'' }}" required>
+                            </div>
+                        </div>
+
+                        <!-- TIPO -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tipo</label>
+
+                            <div class="d-flex gap-3 mt-2">
+
+                                <div class="form-check card p-3 flex-fill border-success">
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           name="tipo"
+                                           value="P"
+                                           {% if evento.tipo == 'P' %}checked{% endif %}>
+                                    <label class="form-check-label">
+                                        <i class="fas fa-arrow-up text-success"></i>
+                                        <strong>Provento</strong><br>
+                                        <small class="text-muted">Adiciona valor ao salário</small>
+                                    </label>
+                                </div>
+
+                                <div class="form-check card p-3 flex-fill border-danger">
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           name="tipo"
+                                           value="D"
+                                           {% if evento.tipo == 'D' %}checked{% endif %}>
+                                    <label class="form-check-label">
+                                        <i class="fas fa-arrow-down text-danger"></i>
+                                        <strong>Desconto</strong><br>
+                                        <small class="text-muted">Reduz valor do salário</small>
+                                    </label>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- VALORES -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Configuração de Valor</label>
+
+                            <div class="card p-3 bg-light border-0">
+
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted">Percentual (%)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-percentage"></i>
+                                        </span>
+                                        <input type="number" step="0.0001" name="percentual"
+                                               class="form-control"
+                                               value="{{ evento.percentual|stringformat:'s'|default:'' }}">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="form-label small text-muted">Valor Fixo (R$)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-dollar-sign"></i>
+                                        </span>
+                                        <input type="number" step="0.01" name="valor_fixo"
+                                               class="form-control"
+                                               value="{{ evento.valor_fixo|stringformat:'.2f'|default:'' }}">
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
                     </div>
 
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Valor fixo:</label>
-                        <input type="number" step="0.01" name="valor_fixo" class="form-control" 
-                               value="{{ evento.valor_fixo|stringformat:'.2f'|default:'' }}" 
-                               placeholder="0,00">
-                    </div>
-                </div>
+                    <!-- BOTÕES -->
+                    <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
 
-                <div class="mt-4 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary px-4">SALVAR</button>
-                    <a href="{% url 'eventos_list' %}" class="btn btn-outline-secondary px-4">CANCELAR</a>
-                </div>
-            </form>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i>
+                            Preencha ao menos percentual ou valor fixo
+                        </small>
+
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'eventos_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+
+                            <button type="submit" class="btn btn-primary shadow">
+                                <i class="fas fa-save"></i> Salvar Evento
+                            </button>
+                        </div>
+
+                    </div>
+
+                </form>
+
+            </div>
         </div>
     </div>
+
+    <!-- SIDEBAR (UX PROFISSIONAL) -->
+    <div class="col-md-4">
+
+        <div class="card shadow border-0 mb-3">
+            <div class="card-body">
+                <h6 class="text-uppercase text-muted mb-3">
+                    <i class="fas fa-lightbulb"></i> Dicas
+                </h6>
+
+                <ul class="small text-muted">
+                    <li>Use percentual para cálculos automáticos</li>
+                    <li>Valor fixo é aplicado diretamente</li>
+                    <li>Evite preencher ambos ao mesmo tempo</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card shadow border-0">
+            <div class="card-body text-center">
+                <i class="fas fa-file-invoice-dollar fa-2x text-primary mb-2"></i>
+                <p class="small text-muted mb-0">
+                    Eventos impactam diretamente na folha salarial.
+                </p>
+            </div>
+        </div>
+
+    </div>
+
 </div>
+
 {% endblock %}

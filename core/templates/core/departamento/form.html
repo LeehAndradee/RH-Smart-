@@ -1,41 +1,63 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block content %}
+
 <div class="container mt-4">
+
+    <!-- HEADER PADRÃO -->
+    <div class="mb-4">
+        <h2 class="mb-0">
+            {% if departamento.id %}
+                Editar Departamento
+            {% else %}
+                Novo Departamento
+            {% endif %}
+        </h2>
+        <small class="text-muted">
+            {% if departamento.id %}
+                Atualize as informações do departamento
+            {% else %}
+                Cadastre um novo setor na organização
+            {% endif %}
+        </small>
+    </div>
+
+    <!-- CARD -->
     <div class="card shadow border-0">
-        <div class="card-header bg-dark text-white">
-            <h4 class="mb-0">
-                {% if departamento.id %}
-                    <i class="fas fa-edit me-2"></i>Editar Departamento: {{ departamento.nome }}
-                {% else %}
-                    <i class="fas fa-plus me-2"></i>Novo Departamento
-                {% endif %}
-            </h4>
-        </div>
-        
         <div class="card-body p-4">
+
             <form method="post">
                 {% csrf_token %}
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Nome do Departamento:</label>
+                <!-- NOME -->
+                <div class="mb-4">
+                    <label class="form-label text-secondary fw-semibold">
+                        <i class="fas fa-building me-1"></i> Nome do Departamento
+                    </label>
                     <input type="text" name="nome" class="form-control shadow-sm"
                            placeholder="Ex: Recursos Humanos"
                            value="{{ departamento.nome|default:'' }}" required>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Descrição:</label>
-                    <textarea name="descricao" class="form-control shadow-sm" rows="3" 
+                <!-- DESCRIÇÃO -->
+                <div class="mb-4">
+                    <label class="form-label text-secondary fw-semibold">
+                        <i class="fas fa-align-left me-1"></i> Descrição
+                    </label>
+                    <textarea name="descricao" class="form-control shadow-sm" rows="3"
                               placeholder="Descreva as responsabilidades...">{{ departamento.descricao|default:'' }}</textarea>
                 </div>
 
+                <!-- DEPARTAMENTO SUPERIOR -->
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Departamento Superior (Opcional):</label>
+                    <label class="form-label text-secondary fw-semibold">
+                        <i class="fas fa-sitemap me-1"></i> Departamento Superior
+                    </label>
                     <select name="parent_id" class="form-select shadow-sm">
-                        <option value="">Nenhum (Departamento Principal)</option>
+                        <option value="">Nenhum (Principal)</option>
                         {% for d in departamentos %}
-                            <option value="{{ d.id }}" {% if departamento.parent_id == d.id %}selected{% endif %}>
+                            <option value="{{ d.id }}"
+                                {% if departamento.parent_id == d.id %}selected{% endif %}>
                                 {{ d.nome }}
                             </option>
                         {% endfor %}
@@ -44,16 +66,30 @@
 
                 <hr>
 
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-success px-5 fw-bold shadow">
-                        <i class="fas fa-save me-2"></i>Salvar Alterações
+                <!-- BOTÕES -->
+                <div class="d-flex gap-2 mt-4">
+
+                    <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                        <i class="fas fa-save me-1"></i>
+                        {% if departamento.id %}
+                            Salvar Alterações
+                        {% else %}
+                            Cadastrar Departamento
+                        {% endif %}
                     </button>
-                    <a href="{% url 'departamento_view' %}" class="btn btn-outline-secondary px-5 fw-bold">
+
+                    <a href="{% url 'departamento_view' %}" 
+                       class="btn btn-outline-secondary px-4">
                         Voltar
                     </a>
+
                 </div>
+
             </form>
+
         </div>
     </div>
+
 </div>
+
 {% endblock %}

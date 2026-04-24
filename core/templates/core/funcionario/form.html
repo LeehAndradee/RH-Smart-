@@ -1,104 +1,141 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+
+{% block page_title %}
+    {% if funcionario %}Editar Funcionário{% else %}Novo Funcionário{% endif %}
+{% endblock %}
+
+{% block page_subtitle %}
+    Cadastro completo de dados do funcionário
+{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="card shadow">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">
-                {% if funcionario %}Editar Funcionário: {{ funcionario.nome }}{% else %}Cadastro Completo de Funcionário{% endif %}
-            </h4>
-        </div>
-        <div class="card-body">
-            <form method="post">
-                {% csrf_token %}
-                
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Nome Completo</label>
-                        <input type="text" name="nome" class="form-control" value="{{ funcionario.nome|default:'' }}" required>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">CPF</label>
-                        <input type="text" name="cpf" class="form-control" placeholder="000.000.000-00" 
-                               value="{{ funcionario.cpf|default:'' }}" {% if funcionario %}readonly{% endif %} required>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Data de Nascimento</label>
-                        <input type="date" name="data_nascimento" class="form-control" 
-                               value="{{ funcionario.data_nascimento|date:'Y-m-d' }}" required>
-                    </div>
+
+<div class="card shadow border-0">
+    <div class="card-body">
+
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- DADOS PESSOAIS -->
+            <h6 class="text-secondary mb-3 fw-bold">Dados Pessoais</h6>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-secondary">Nome Completo</label>
+                    <input type="text" name="nome" class="form-control"
+                           value="{{ funcionario.nome|default:'' }}" required>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Nome da Mãe</label>
-                        <input type="text" name="nome_mae" class="form-control" value="{{ funcionario.nome_mae|default:'' }}" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Nome do Pai (Opcional)</label>
-                        <input type="text" name="nome_pai" class="form-control" value="{{ funcionario.nome_pai|default:'' }}">
-                    </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label text-secondary">CPF</label>
+                    <input type="text" name="cpf" class="form-control"
+                           value="{{ funcionario.cpf|default:'' }}"
+                           {% if funcionario %}readonly{% endif %} required>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Email Profissional</label>
-                        <input type="email" name="email" class="form-control" value="{{ funcionario.email|default:'' }}" required>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Telefone</label>
-                        <input type="text" name="telefone" class="form-control" value="{{ funcionario.telefone|default:'' }}" required>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Dependentes</label>
-                        <input type="number" name="dependentes" class="form-control" value="{{ funcionario.dependentes|default:'0' }}">
-                    </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label text-secondary">Nascimento</label>
+                    <input type="date" name="data_nascimento" class="form-control"
+                           value="{{ funcionario.data_nascimento|date:'Y-m-d' }}" required>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-secondary">Nome da Mãe</label>
+                    <input type="text" name="nome_mae" class="form-control"
+                           value="{{ funcionario.nome_mae|default:'' }}" required>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Endereço Completo</label>
-                    <textarea name="endereco_completo" class="form-control" rows="2">{{ funcionario.endereco_completo|default:'' }}</textarea>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-secondary">Nome do Pai</label>
+                    <input type="text" name="nome_pai" class="form-control"
+                           value="{{ funcionario.nome_pai|default:'' }}">
+                </div>
+            </div>
+
+            <!-- CONTATO -->
+            <h6 class="text-secondary mt-4 mb-3 fw-bold">Contato</h6>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label text-secondary">Email</label>
+                    <input type="email" name="email" class="form-control"
+                           value="{{ funcionario.email|default:'' }}" required>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Cargo</label>
-                        <select name="cargo" class="form-select" required>
-                            <option value="">Selecione...</option>
-                            {% for c in cargos %}
-                                <option value="{{ c.id }}" {% if funcionario.cargo.id == c.id %}selected{% endif %}>
-                                    {{ c.nome }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Salário Base:</label>
-                        <div class="input-group">
-                            <span class="input-group-text">R$</span>
-                            <input type="number" step="0.01" name="salario_base" class="form-control" 
-                                   value="{{ funcionario.salario_base|stringformat:'.2f'|default:'0.00' }}" required>
-                        </div>
-                    </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label text-secondary">Telefone</label>
+                    <input type="text" name="telefone" class="form-control"
+                           value="{{ funcionario.telefone|default:'' }}" required>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Data de Admissão</label>
-                        <input type="date" name="data_admissao" class="form-control" 
-                               value="{{ funcionario.data_admissao|date:'Y-m-d' }}" required>
-                    </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label text-secondary">Dependentes</label>
+                    <input type="number" name="dependentes" class="form-control"
+                           value="{{ funcionario.dependentes|default:'0' }}">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label text-secondary">Endereço</label>
+                <textarea name="endereco_completo" class="form-control" rows="2">
+{{ funcionario.endereco_completo|default:'' }}
+                </textarea>
+            </div>
+
+            <!-- DADOS PROFISSIONAIS -->
+            <h6 class="text-secondary mt-4 mb-3 fw-bold">Dados Profissionais</h6>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-secondary">Cargo</label>
+                    <select name="cargo" class="form-select" required>
+                        <option value="">Selecione...</option>
+                        {% for c in cargos %}
+                            <option value="{{ c.id }}"
+                                {% if funcionario.cargo.id == c.id %}selected{% endif %}>
+                                {{ c.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
                 </div>
 
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-success">
-                        {% if funcionario %}Salvar Alterações{% else %}Cadastrar Funcionário{% endif %}
-                    </button>
-                    <a href="{% url 'funcionarios_view' %}" class="btn btn-outline-secondary">Voltar</a>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-secondary">Salário Base</label>
+                    <div class="input-group">
+                        <span class="input-group-text">R$</span>
+                        <input type="number" step="0.01" name="salario_base"
+                               class="form-control"
+                               value="{{ funcionario.salario_base|stringformat:'.2f'|default:'0.00' }}"
+                               required>
+                    </div>
                 </div>
-            </form>
-        </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-secondary">Data de Admissão</label>
+                    <input type="date" name="data_admissao" class="form-control"
+                           value="{{ funcionario.data_admissao|date:'Y-m-d' }}" required>
+                </div>
+            </div>
+
+            <!-- BOTÕES -->
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="fas fa-save"></i>
+                    {% if funcionario %}Salvar{% else %}Cadastrar{% endif %}
+                </button>
+
+                <a href="{% url 'funcionarios_view' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+
+        </form>
+
     </div>
 </div>
+
 {% endblock %}

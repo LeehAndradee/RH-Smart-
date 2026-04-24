@@ -1,5 +1,5 @@
 from decimal import Decimal
-
+from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
@@ -8,6 +8,10 @@ from django.contrib.auth.models import User
 from .models import Funcionario, Evento, FolhaPagamento, ItemFolha 
 from django.contrib import messages
 from django.shortcuts import render, get_object_or_404
+from django.db.models import Count, Sum, Avg
+
+
+
 
 # --- HELPER DE PERMISSÃO ---
 def e_rh(user):
@@ -18,13 +22,36 @@ def e_rh(user):
 
 @login_required
 def dashboard_view(request):
+
+    total_funcionarios = Funcionario.objects.count()
+    total_cargos = Cargo.objects.count()
+    total_departamentos = Departamento.objects.count()
+
+    total_salarios = Funcionario.objects.aggregate(
+        total=Sum('salario_base')
+    )['total'] or 0
+
+    # Últimos funcionários cadastrados
+    ultimos_funcionarios = Funcionario.objects.order_by('-id')[:5]
+
+    # Aniversariantes
+    mes_atual = datetime.now().month
+    aniversariantes = Funcionario.objects.filter(data_nascimento__month=mes_atual)
+
+    # Faltas recentes
+    faltas = Falta.objects.select_related('funcionario').order_by('-data')[:5]
+
     context = {
-        'total_funcionarios': Funcionario.objects.count(),
-        'total_departamentos': Departamento.objects.count(),
-        # Trocamos status='ABERTO' por fechada=False
-        'folhas_abertas': FolhaPagamento.objects.filter(fechada=False).count(),
+        'total_funcionarios': total_funcionarios,
+        'total_cargos': total_cargos,
+        'total_departamentos': total_departamentos,
+        'total_salarios': total_salarios,
+        'ultimos_funcionarios': ultimos_funcionarios,
+        'aniversariantes': aniversariantes,
+        'faltas': faltas,
     }
-    return render(request, 'core/dashboard.html', context)
+
+    return render(request, 'dashboard.html', context)
 
 # --- FUNCIONÁRIOS ---
 @login_required
@@ -298,28 +325,40 @@ def folha_view(request):
 def folha_create(request):
     if request.method == 'POST':
         funcionario_id = request.POST.get('funcionario')
-        mes = request.POST.get('mes')
-        ano = request.POST.get('ano')
+        mes = int(request.POST.get('mes'))
+        ano = int(request.POST.get('ano'))
         tipo = request.POST.get('tipo')
 
         funcionario = get_object_or_404(Funcionario, id=funcionario_id)
 
-        # ✅ PRIMEIRO: pega a parcela
+        # ✅ 13º parcela
         valor_parcela = request.POST.get('parcela_13o')
         parcela = int(valor_parcela) if valor_parcela else None
 
-        # ✅ AGORA sim pode usar
+        # ✅ RESCISÃO
+        data_rescisao = request.POST.get('data_rescisao')
+        motivo_rescisao = request.POST.get('motivo_rescisao')
+
+        if data_rescisao:
+            data_rescisao = datetime.strptime(data_rescisao, '%Y-%m-%d').date()
+        else:
+            data_rescisao = None
+
+        # ✅ Criação da folha
         nova_folha = FolhaPagamento(
             funcionario=funcionario,
             mes=mes,
             ano=ano,
             tipo=tipo,
-            parcela_13o=parcela,  # ✔ agora funciona
+            parcela_13o=parcela,
+            data_rescisao=data_rescisao,
+            motivo_rescisao=motivo_rescisao,
             fechada=False
         )
+
         nova_folha.save()
 
-        # Eventos
+        # ✅ Eventos extras
         eventos_ids = request.POST.getlist('evento_id[]')
         eventos_valores = request.POST.getlist('evento_valor[]')
 
@@ -331,6 +370,7 @@ def folha_create(request):
                     valor=valor.replace(',', '.')
                 )
 
+        # ✅ Recalcular com tudo aplicado
         nova_folha.calcular_tudo()
         nova_folha.save()
 
@@ -340,6 +380,7 @@ def folha_create(request):
         'funcionarios': Funcionario.objects.all().order_by('nome'),
         'eventos': Evento.objects.all().order_by('nome')
     }
+
     return render(request, 'core/folha/form.html', context)
 
 def folha_detail(request, id):

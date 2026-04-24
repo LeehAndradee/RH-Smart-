@@ -51,6 +51,13 @@ class Funcionario(models.Model):
     data_nascimento = models.DateField()
     data_admissao = models.DateField()
     dependentes = models.IntegerField(default=0)
+
+    SEXO_CHOICES = (
+    ('M', 'Masculino'),
+    ('F', 'Feminino'),
+    )
+
+    sexo = models.CharField(max_length=1, choices=SEXO_CHOICES, blank=True, null=True)
     
     # Filiação e Endereço
     nome_mae = models.CharField(max_length=150)
@@ -99,6 +106,7 @@ class Falta(models.Model):
     justificada = models.BooleanField(default=False)
     documento = models.FileField(upload_to='justificativas/', null=True, blank=True)
     observacao = models.TextField(blank=True)
+    
 
     def __str__(self):
         status = "Justificada" if self.justificada else "Não Justificada"
@@ -132,6 +140,7 @@ class FolhaPagamento(models.Model):
     dias_gozo_ferias = models.IntegerField(null=True, blank=True, default=30)
     data_rescisao = models.DateField(null=True, blank=True)
     parcela_13o = models.IntegerField(choices=PARCELAS_13O, null=True, blank=True)
+    motivo_rescisao = models.CharField(max_length=50, null=True, blank=True)
     
     # Campos de Snapshot e Resultados
     salario_base_Snapshot = models.DecimalField(max_digits=10, decimal_places=2, default=0)

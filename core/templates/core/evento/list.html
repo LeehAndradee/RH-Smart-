@@ -41,20 +41,24 @@
                             <td class="align-middle">
                                R$ {{ evento.valor_fixo|default:"0.00" }}
                             </td>
-                            <td class="text-center pe-4 align-middle">
-                                <div class="btn-group" role="group">
+                            <td class="text-center">
+                                <div class="btn-group">
+
                                     <a href="{% url 'evento_update' evento.id %}" 
-                                       class="btn btn-sm btn-outline-warning" 
-                                       title="Editar Evento">
-                                        <i class="fas fa-edit"></i>
+                                    class="btn btn-sm btn-outline-warning"
+                                    title="Editar"
+                                    data-bs-toggle="tooltip">
+                                        <i class="fas fa-edit me-1"></i> Editar
                                     </a>
-                                    
+
                                     <a href="{% url 'evento_delete' evento.id %}" 
-                                       class="btn btn-sm btn-outline-danger" 
-                                       title="Excluir Evento"
-                                       onclick="return confirm('Tem certeza que deseja excluir o evento: {{ evento.nome }}?')">
-                                        <i class="fas fa-trash"></i>
+                                    class="btn btn-sm btn-outline-danger"
+                                    title="Excluir"
+                                    data-bs-toggle="tooltip"
+                                    onclick="return confirm('Excluir {{ evento.nome }}?')">
+                                        <i class="fas fa-trash me-1"></i> Excluir
                                     </a>
+
                                 </div>
                             </td>
                         </tr>

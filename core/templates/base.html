@@ -2,85 +2,101 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RH Smart</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .sidebar { 
-            min-height: 100vh; 
-            background: #2c3e50; 
-            color: white; 
-            padding-top: 20px; 
-            position: sticky;
-            top: 0;
-        }
-        .nav-link { 
-            color: #bdc3c7; 
-            padding: 12px 20px;
-            transition: all 0.3s;
-        }
-        .nav-link:hover { 
-            color: white; 
-            background: #34495e; 
-            border-radius: 5px;
-        }
-        /* Classe que destaca o menu atual */
-        .nav-link.active {
-            color: #fff !important;
-            background: #1abc9c !important;
-            border-radius: 5px;
-        }
-        .main-content { 
-            padding: 30px; 
-            background: #f8f9fa; 
-            min-height: 100vh; 
-        }
-        hr { border-color: #7f8c8d; }
-    </style>
-</head>
-<body>
-    <div class="container-fluid">
-        <div class="row">
-            <nav class="col-md-3 col-lg-2 sidebar d-none d-md-block shadow">
-                <h4 class="text-center py-2">🚀 RH Smart</h4>
-                <hr>
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">🏠 Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if 'departamentos' in request.path %}active{% endif %}" href="{% url 'departamento_view' %}">🏢 Departamentos</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if 'cargos' in request.path %}active{% endif %}" href="{% url 'cargos_view' %}">💼 Cargos</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if 'funcionarios' in request.path %}active{% endif %}" href="{% url 'funcionarios_view' %}">👥 Funcionários</a>
-                    </li>
-                    
-                    <li class="nav-item">
-                        <a class="nav-link {% if 'eventos' in request.path %}active{% endif %}" href="{% url 'eventos_list' %}">⚡ Eventos</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if 'faltas' in request.path %}active{% endif %}" href="{% url 'faltas_list' %}">⚠️ Faltas</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if 'folha' in request.path %}active{% endif %}" href="{% url 'folha_view' %}">📄 Folha de Pagamento</a>
-                    </li>
-                </ul>
-            </nav>
 
-            <main class="col-md-9 col-lg-10 main-content">
-                <div class="card shadow-sm border-0">
-                    <div class="card-body">
-                        {% block content %}{% endblock %}
-                    </div>
-                </div>
-            </main>
+    {% load static %}
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="{% static 'core/js/dashboard.js' %}"></script>
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h4>🚀 RH Smart</h4>
+        <hr>
+
+        <ul class="nav flex-column">
+
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link {% if 'departamentos' in request.path %}active{% endif %}" href="{% url 'departamento_view' %}">
+                    <i class="fas fa-building"></i> Departamentos
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link {% if 'cargos' in request.path %}active{% endif %}" href="{% url 'cargos_view' %}">
+                    <i class="fas fa-briefcase"></i> Cargos
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link {% if 'funcionarios' in request.path %}active{% endif %}" href="{% url 'funcionarios_view' %}">
+                    <i class="fas fa-users"></i> Funcionários
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link {% if 'eventos' in request.path %}active{% endif %}" href="{% url 'eventos_list' %}">
+                    <i class="fas fa-bolt"></i> Eventos
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link {% if 'faltas' in request.path %}active{% endif %}" href="{% url 'faltas_list' %}">
+                    <i class="fas fa-exclamation-triangle"></i> Faltas
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link {% if 'folha' in request.path %}active{% endif %}" href="{% url 'folha_view' %}">
+                    <i class="fas fa-file-alt"></i> Folha de Pagamento
+                </a>
+            </li>
+
+        </ul>
+    </div>
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div>
+            <strong>Olá, {{ request.user.username }} 👋</strong>
+        </div>
+
+        <div>
+            <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </a>
         </div>
     </div>
 
+    <!-- MAIN -->
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    {% block scripts %}{% endblock %}
+
+    <script>
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    </script>
+
 </body>
 </html>

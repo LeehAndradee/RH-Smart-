@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <h3 class="mb-4">🏛️ Painel Administrativo - RH Smart</h3>
+
+    <!-- CARDS -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-3">
+            <div class="card shadow text-center p-3">
+                <h6 class="text-muted">Funcionários</h6>
+                <h2>{{ total_funcionarios }}</h2>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow text-center p-3">
+                <h6 class="text-muted">Departamentos</h6>
+                <h2>{{ total_departamentos }}</h2>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow text-center p-3">
+                <h6 class="text-muted">Cargos</h6>
+                <h2>{{ total_cargos }}</h2>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow text-center p-3 bg-warning">
+                <h6>Total da Folha</h6>
+                <h4>R$ {{ total_salarios }}</h4>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TABELAS PRINCIPAIS -->
+    <div class="row g-4">
+
+        <!-- Últimos funcionários -->
+        <div class="col-md-6">
+            <div class="card shadow p-3">
+                <h5>👥 Últimos Funcionários</h5>
+                <table class="table table-striped">
+                    <tr>
+                        <th>Nome</th>
+                        <th>Cargo</th>
+                    </tr>
+                    {% for f in ultimos_funcionarios %}
+                    <tr>
+                        <td>{{ f.nome }}</td>
+                        <td>{{ f.cargo.nome }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="2">Nenhum cadastro</td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+
+        <!-- Faltas -->
+        <div class="col-md-6">
+            <div class="card shadow p-3">
+                <h5>⚠️ Faltas Recentes</h5>
+                <table class="table table-striped">
+                    <tr>
+                        <th>Funcionário</th>
+                        <th>Data</th>
+                    </tr>
+                    {% for f in faltas %}
+                    <tr>
+                        <td>{{ f.funcionario.nome }}</td>
+                        <td>{{ f.data }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="2">Sem faltas</td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ANIVERSARIANTES -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card shadow p-3">
+                <h5>🎂 Aniversariantes do Mês</h5>
+                <table class="table">
+                    <tr>
+                        <th>Nome</th>
+                        <th>Data</th>
+                    </tr>
+                    {% for f in aniversariantes %}
+                    <tr>
+                        <td>{{ f.nome }}</td>
+                        <td>{{ f.data_nascimento|date:"d/m" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="2">Nenhum aniversariante</td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
