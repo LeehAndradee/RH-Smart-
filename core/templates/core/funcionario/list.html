@@ -6,95 +6,96 @@
         <div>
             <h2 class="mb-0">Equipe de Funcionários</h2>
         </div>
+        
+        {# --- TRAVA: APENAS MASTER CRIA --- #}
+        {% if user.perfil.tipo_acesso == 'MASTER' %}
         <a href="{% url 'funcionario_create' %}" class="btn btn-primary shadow-sm">
-            <i class="fas fa-plus"></i> Novo Evento
+            <i class="fas fa-plus"></i> Novo Funcionário
         </a>
+        {% endif %}
     </div>
 
-<div class="card shadow border-0">
-    <div class="card-body p-0">
+    <div class="card shadow border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Funcionário</th>
+                            <th>CPF</th>
+                            <th>Cargo</th>
+                            <th>Departamento</th>
+                            <th class="text-center pe-4">Ações</th>
+                        </tr>
+                    </thead>
 
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-
-                <thead class="table-light">
-                    <tr>
-                        <th class="ps-4">Funcionário</th>
-                        <th>CPF</th>
-                        <th>Cargo</th>
-                        <th>Departamento</th>
-                        <th class="text-center pe-4">Ações</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {% for f in funcionarios %}
-                    <tr>
-
-                        <td class="ps-4">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
-                                     style="width:35px;height:35px;">
-                                    {{ f.nome|first }}
+                    <tbody>
+                        {% for f in funcionarios %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                                         style="width:35px;height:35px;">
+                                        {{ f.nome|first|upper }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">{{ f.nome }}</div>
+                                        <small class="text-muted">ID: {{ f.id }}</small>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div class="fw-bold">{{ f.nome }}</div>
-                                    <small class="text-muted">ID: {{ f.id }}</small>
+                            </td>
+
+                            <td>{{ f.cpf }}</td>
+
+                            <td>
+                                <span class="badge bg-primary-subtle text-primary border border-primary">
+                                    <i class="fas fa-briefcase me-1"></i>
+                                    {{ f.cargo.nome }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="badge bg-secondary-subtle text-secondary border">
+                                    <i class="fas fa-building me-1"></i>
+                                    {{ f.cargo.departamento.nome|default:"-" }}
+                                </span>
+                            </td>
+
+                            <td class="text-center pe-4">
+                                <div class="btn-group">
+                                    
+                                    {# --- TRAVA: APENAS MASTER EDITA OU EXCLUI --- #}
+                                    {% if user.perfil.tipo_acesso == 'MASTER' %}
+                                        <a href="{% url 'funcionario_update' f.id %}"
+                                           class="btn btn-sm btn-outline-warning" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+
+                                        <a href="{% url 'funcionario_delete' f.id %}"
+                                           class="btn btn-sm btn-outline-danger" title="Excluir"  
+                                           onclick="return confirm('Tem certeza que deseja excluir {{ f.nome }}?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted small italic">Somente leitura</span>
+                                    {% endif %}
+                                    
                                 </div>
-                            </div>
-                        </td>
+                            </td>
+                        </tr>
 
-                        <td>{{ f.cpf }}</td>
-
-                        <td>
-                            <span class="badge bg-primary-subtle text-primary border border-primary">
-                                <i class="fas fa-briefcase me-1"></i>
-                                {{ f.cargo.nome }}
-                            </span>
-                        </td>
-
-                        <td>
-                            <span class="badge bg-secondary-subtle text-secondary border">
-                                <i class="fas fa-building me-1"></i>
-                                {{ f.cargo.departamento|default:"-" }}
-                            </span>
-                        </td>
-
-                        <td class="text-center pe-4">
-                            <div class="btn-group">
-
-                                <a href="{% url 'funcionario_update' f.id %}"
-                                   class="btn btn-sm btn-outline-warning" title="Editar">
-                                    <i class="fas fa-edit me-1"></i> Editar
-                                </a>
-
-                                <a href="{% url 'funcionario_delete' f.id %}"
-                                   class="btn btn-sm btn-outline-danger" title="Excluir"  
-                                   data-bs-toggle="tooltip"
-                                   onclick="return confirm('Excluir {{ f.nome }}?')">
-                                    <i class="fas fa-trash me-1"></i> Excluir
-                                </a>
-                            
-
-                            </div>
-                        </td>
-
-                    </tr>
-
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">
-                            <i class="fas fa-users fa-2x mb-2"></i>
-                            <p>Nenhum funcionário cadastrado</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-
-            </table>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="fas fa-users fa-2x mb-2"></i>
+                                <p>Nenhum funcionário cadastrado</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
-
     </div>
 </div>
-
 {% endblock %}

@@ -40,6 +40,7 @@ urlpatterns = [
 
     path('folha/<int:folha_id>/imprimir/', views.imprimir_holerite, name='imprimir_holerite'),
     path('login/', auth_views.LoginView.as_view(), name='login'),
+    path('primeiro-acesso/', views.primeiro_acesso_view, name='primeiro_acesso'),
 
     # --- API ---
     path('api/funcionario/<int:id>/', views.get_funcionario, name='api_get_funcionario'),

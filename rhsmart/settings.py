@@ -76,7 +76,7 @@ WSGI_APPLICATION = 'rhsmart.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'rhsmart',
+        'NAME': 'rhsmart2',
         'USER': 'postgres',      # Seu usuário do Postgres
         'PASSWORD': 'Elieusa123!', # Sua senha do Postgres
         'HOST': '127.0.0.1', # Use o IP em vez de 'localhost' para evitar buscas de DNS do Windows
@@ -136,5 +136,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Configurações de Autenticação
 LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/dashboard/'  # ou onde quiser
+LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'

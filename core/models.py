@@ -42,48 +42,63 @@ class Cargo(models.Model):
         return f"{self.nome} ({self.nivel})"
 
 class Funcionario(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
+    # --- VÍNCULO COM O USUÁRIO DO DJANGO ---
+    # No seu models.py ajuste:
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil', null=True, blank=True)
+    
+    # --- CONTROLE DE ACESSO SIMPLIFICADO ---
+    TIPO_ACESSO_CHOICES = [
+        ('MASTER', 'Master (Acesso Total)'),
+        ('USUARIO', 'Usuário (Apenas Visualização)'),
+    ]
+    tipo_acesso = models.CharField(
+        max_length=10, 
+        choices=TIPO_ACESSO_CHOICES, 
+        default='USUARIO',
+        verbose_name="Nível de Acesso"
+    )
+
+    # --- DADOS IDENTIFICADORES ---
     matricula = models.CharField(max_length=20, unique=True, editable=False)
     nome = models.CharField(max_length=150)
     cpf = models.CharField(max_length=14, unique=True, validators=[validar_cpf])
     email = models.EmailField()
     telefone = models.CharField(max_length=20)
+    
+    # --- DADOS PESSOAIS ---
     data_nascimento = models.DateField()
     data_admissao = models.DateField()
     dependentes = models.IntegerField(default=0)
-
+    
     SEXO_CHOICES = (
-    ('M', 'Masculino'),
-    ('F', 'Feminino'),
+        ('M', 'Masculino'),
+        ('F', 'Feminino'),
     )
-
     sexo = models.CharField(max_length=1, choices=SEXO_CHOICES, blank=True, null=True)
     
-    # Filiação e Endereço
     nome_mae = models.CharField(max_length=150)
     nome_pai = models.CharField(max_length=150, blank=True)
     endereco_completo = models.TextField()
     
+    # --- DADOS PROFISSIONAIS ---
     cargo = models.ForeignKey(Cargo, on_delete=models.PROTECT)
-     
     salario_base = models.DecimalField(
         max_digits=10, 
         decimal_places=2, 
-        default=Decimal('0.00'),
-        null=True, 
-        blank=True
+        default=Decimal('0.00') # Removi null/blank para evitar erros em cálculos
     )
-    
+
     def save(self, *args, **kwargs):
+        # Gera matrícula automática apenas na criação
         if not self.matricula:
-            # Gera matrícula automática: Ano + ID sequencial
-            ultimo = Funcionario.objects.last()
+            ultimo = Funcionario.objects.order_by('id').last() # Adicionado order_by para precisão
             id_prox = (ultimo.id + 1) if ultimo else 1
             self.matricula = f"{date.today().year}{id_prox:04d}"
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.matricula} - {self.nome}"
+        return f"{self.matricula} - {self.nome} ({self.tipo_acesso})"
+    
 
 class Evento(models.Model):
     TIPOS = [('PROVENTO', 'Provento (+)'), ('DESCONTO', 'Desconto (-)')]

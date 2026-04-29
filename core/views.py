@@ -10,13 +10,13 @@ from django.contrib import messages
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Count, Sum, Avg
 from django.contrib.auth.views import LoginView
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.models import User
 
+def eh_master(user):
+    # Checa se o usuário está logado e se o perfil dele é MASTER
+    return user.is_authenticated and hasattr(user, 'perfil') and user.perfil.tipo_acesso == 'MASTER'
 
-
-
-# --- HELPER DE PERMISSÃO ---
-def e_rh(user):
-    return user.is_staff or user.groups.filter(name='RH').exists()
 
 # --- DASHBOARD ---
 # No core/views.py, dentro da dashboard_view:
@@ -57,16 +57,44 @@ def dashboard_view(request):
 # --- FUNCIONÁRIOS ---
 @login_required
 def funcionarios_view(request):
-    funcionarios = Funcionario.objects.all()
-    return render(request, 'core/funcionario/list.html', {'funcionarios': funcionarios})
+    # 1. Se for MASTER, ele vê a lista completa de funcionários
+    if request.user.perfil.tipo_acesso == 'MASTER':
+        funcionarios = Funcionario.objects.all()
+        return render(request, 'core/funcionario/list.html', {'funcionarios': funcionarios})
+    
+    # 2. Se for USUARIO, ele não deve ver a lista, mas sim os PRÓPRIOS dados
+    else:
+        # Buscamos apenas o registro que pertence ao usuário logado
+        funcionario_proprio = get_object_or_404(Funcionario, user=request.user)
+        
+        # Enviamos ele para a tela de formulário, mas com uma flag de bloqueio
+        return render(request, 'core/funcionario/form.html', {
+            'funcionario': funcionario_proprio,
+            'cargos': Cargo.objects.all(),
+            'somente_leitura': True # Flag para desabilitar campos no HTML
+        })
 
-
+@user_passes_test(eh_master, login_url='dashboard_view')
+@login_required
 def funcionario_update(request, id):
-    # Busca o funcionário ou retorna 404 se não existir
     funcionario = get_object_or_404(Funcionario, id=id)
     
+    # --- LOGICA DE PERMISSÃO ---
+    eh_admin = (request.user.perfil.tipo_acesso == 'MASTER')
+    eh_dono = (funcionario.user == request.user)
+
+    # Se não for Master e nem o dono do perfil, barra o acesso
+    if not eh_admin and not eh_dono:
+        messages.error(request, "Você não tem permissão para acessar este perfil.")
+        return redirect('dashboard_view')
+
     if request.method == 'POST':
-        # Se o usuário clicou em salvar, atualizamos o objeto
+        # Bloqueio de segurança: mesmo que ele tente forçar o POST, só Master salva
+        if not eh_admin:
+            messages.error(request, "Apenas o RH pode alterar dados cadastrais.")
+            return redirect('dashboard_view')
+
+        # --- LÓGICA DE SALVAMENTO (SÓ MASTER CHEGA AQUI) ---
         funcionario.nome = request.POST.get('nome')
         funcionario.email = request.POST.get('email')
         funcionario.telefone = request.POST.get('telefone')
@@ -79,26 +107,27 @@ def funcionario_update(request, id):
         
         funcionario.save()
         
-        # Sincroniza o e-mail no User do sistema
+        # Sincroniza o e-mail no User
         funcionario.user.email = funcionario.email
         funcionario.user.save()
         
         messages.success(request, "Dados atualizados com sucesso!")
         return redirect('funcionarios_view')
 
-    # No GET, enviamos o funcionário e a lista de cargos para o template
+    # --- GET (VISUALIZAÇÃO) ---
     cargos = Cargo.objects.all().order_by('nome')
     return render(request, 'core/funcionario/form.html', {
         'funcionario': funcionario,
         'cargos': cargos
     })
 
+@user_passes_test(eh_master, login_url='dashboard')
 def funcionario_delete(request, id):
     funcionario = get_object_or_404(Funcionario, id=id)
     funcionario.delete()
     return redirect('funcionarios_view')
 
-
+@user_passes_test(eh_master, login_url='dashboard')
 def funcionario_create(request):
     if request.method == 'POST':
         try:
@@ -165,10 +194,12 @@ def funcionario_create(request):
     return render(request, 'core/funcionario/form.html', {'cargos': cargos})
 
 # --- CARGOS ---
+@user_passes_test(eh_master, login_url='dashboard_view')
 def cargos_view(request):
     cargos = Cargo.objects.all()
     return render(request, 'core/cargo/list.html', {'cargos': cargos})
 
+@user_passes_test(eh_master, login_url='dashboard')
 def cargo_create(request):
     if request.method == 'POST':
         nome = request.POST.get('nome')
@@ -187,6 +218,8 @@ def cargo_create(request):
     
     departamentos = Departamento.objects.all()
     return render(request, 'core/cargo/form.html', {'departamentos': departamentos})
+
+@user_passes_test(eh_master, login_url='dashboard_view')
 def cargo_update(request, id):
     cargo = get_object_or_404(Cargo, id=id)
     
@@ -205,15 +238,20 @@ def cargo_update(request, id):
         'departamentos': departamentos
     })
 
+
+@user_passes_test(eh_master, login_url='dashboard')
 def cargo_delete(request, id):
     get_object_or_404(Cargo, id=id).delete()
     return redirect('cargos_view')
 
 # --- DEPARTAMENTOS ---
+@user_passes_test(eh_master, login_url='dashboard_view')
 def departamentos_view(request):
     departamentos = Departamento.objects.all()
     return render(request, 'core/departamento/list.html', {'departamentos': departamentos})
 
+
+@user_passes_test(eh_master, login_url='dashboard')
 def departamento_create(request):
     if request.method == 'POST':
         nome = request.POST.get('nome')
@@ -232,20 +270,26 @@ def departamento_create(request):
     departamentos = Departamento.objects.all()
     return render(request, 'core/departamento/form.html', {'departamentos': departamentos})
 
+@user_passes_test(eh_master, login_url='dashboard_view')
 def departamento_update(request, id):
     departamento = get_object_or_404(Departamento, id=id)
     return render(request, 'core/departamento/form.html', {'departamento': departamento})
 
+
+@user_passes_test(eh_master, login_url='dashboard')
 def departamento_delete(request, id):
     get_object_or_404(Departamento, id=id).delete()
     return redirect('departamentos_view')
 
 
 # --- EVENTOS ---
+@user_passes_test(eh_master, login_url='dashboard_view')
 def eventos_view(request):
     eventos = Evento.objects.all().order_by('nome')
     return render(request, 'core/evento/list.html', {'eventos': eventos})
 
+
+@user_passes_test(eh_master, login_url='dashboard')
 def evento_create(request):
     if request.method == "POST":
         nome = request.POST.get('nome') 
@@ -265,6 +309,7 @@ def evento_create(request):
     
     return render(request, 'core/evento/form.html')
 
+@user_passes_test(eh_master, login_url='dashboard_view')
 def evento_update(request, id):
     evento = get_object_or_404(Evento, id=id)
     
@@ -284,6 +329,7 @@ def evento_update(request, id):
 
     return render(request, 'core/evento/form.html', {'evento': evento})
 
+@user_passes_test(eh_master, login_url='dashboard')
 def evento_delete(request, id):
     evento = get_object_or_404(Evento, id=id)
     evento.delete()
@@ -291,10 +337,12 @@ def evento_delete(request, id):
 
 
 # --- FALTAS ---
+@user_passes_test(eh_master, login_url='dashboard_view')
 def faltas_view(request):
     faltas = Falta.objects.all()
     return render(request, 'core/falta/list.html', {'faltas': faltas})
 
+@user_passes_test(eh_master, login_url='dashboard_view')
 def cadastrar_falta(request):
     if request.method == 'POST':
         # Aqui pegamos os dados que vêm do formulário (o 'name' de cada input)
@@ -319,10 +367,18 @@ def cadastrar_falta(request):
     return render(request, 'core/falta/form.html', {'funcionarios': funcionarios})
 
 # --- FOLHA DE PAGAMENTO ---
+@login_required
 def folha_view(request):
-    folhas = FolhaPagamento.objects.all().order_by('-ano', '-mes')
+    if request.user.perfil.tipo_acesso == 'MASTER':
+        # Master vê todas as folhas de todos os funcionários
+        folhas = FolhaPagamento.objects.all().order_by('-ano', '-mes')
+    else:
+        # Usuário comum vê APENAS as folhas ligadas ao seu perfil de funcionário
+        folhas = FolhaPagamento.objects.filter(funcionario__user=request.user).order_by('-ano', '-mes')
+    
     return render(request, 'core/folha/list.html', {'folhas': folhas})
 
+@user_passes_test(eh_master, login_url='dashboard')
 def folha_create(request):
     if request.method == 'POST':
         funcionario_id = request.POST.get('funcionario')
@@ -387,12 +443,18 @@ def folha_create(request):
 def folha_detail(request, id):
     folha = get_object_or_404(FolhaPagamento, id=id)
     
+    # SEGURANÇA: Se não for MASTER e a folha não for do usuário logado, bloqueia!
+    if request.user.perfil.tipo_acesso != 'MASTER' and folha.funcionario.user != request.user:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied("Você não tem permissão para visualizar esta folha.")
+    
     if not folha.fechada:
         folha.calcular_tudo()
         folha.save()
     
     return render(request, 'core/folha/detail.html', {'folha': folha})
 
+@user_passes_test(eh_master, login_url='dashboard_view')
 def folha_update(request, id):
     folha = get_object_or_404(FolhaPagamento, id=id)
 
@@ -416,12 +478,15 @@ def folha_update(request, id):
     }
     return render(request, 'core/folha/form.html', context)
 
+@user_passes_test(eh_master, login_url='dashboard_view')
 def folha_fechar(request, id):
     folha = get_object_or_404(FolhaPagamento, id=id)
     folha.fechada = True  # Altera o boolean
     folha.save()
     return redirect('folha_detail', id=id)
 
+
+@user_passes_test(eh_master, login_url='dashboard')
 def folha_delete(request, id):
     folha = get_object_or_404(FolhaPagamento, id=id)
 
@@ -463,11 +528,63 @@ def departamento_update(request, id):
         'departamentos': departamentos
     })
 
+@user_passes_test(eh_master, login_url='dashboard')
 def departamento_delete(request, id):
     depto = get_object_or_404(Departamento, id=id)
     depto.delete()
     return redirect('departamento_view')
 
+@user_passes_test(eh_master, login_url='dashboard_view')
 def imprimir_holerite(request, folha_id):
     folha = get_object_or_404(FolhaPagamento, id=folha_id)
     return render(request, 'core/folha/folha_impressao.html', {'folha': folha})
+
+
+def primeiro_acesso_view(request):
+    if request.method == 'POST':
+        cpf_digitado = request.POST.get('cpf').strip()
+        senha = request.POST.get('password')
+        confirmar_senha = request.POST.get('confirm_password')
+
+        # 1. Busca o funcionário pelo CPF
+        funcionario = Funcionario.objects.filter(cpf=cpf_digitado).first()
+
+        if not funcionario:
+            messages.error(request, "CPF não encontrado. Por favor, entre em contato com o RH para realizar seu pré-cadastro.")
+            return redirect('primeiro_acesso')
+
+        # 2. Verifica se ele já tem um usuário vinculado
+        if funcionario.user:
+            messages.warning(request, "Este CPF já possui um acesso criado. Tente recuperar sua senha.")
+            return redirect('login')
+
+        # 3. Validação básica de senha
+        if senha != confirmar_senha:
+            messages.error(request, "As senhas não coincidem.")
+            # Corrigido: Aspas duplas removidas e caminho ajustado
+            return render(request, 'registration/primeiro_acesso.html', {'cpf': cpf_digitado})
+
+        if len(senha) < 6:
+            messages.error(request, "A senha deve ter pelo menos 6 caracteres.")
+            return render(request, 'registration/primeiro_acesso.html', {'cpf': cpf_digitado})
+
+        # 4. CRIA O USUÁRIO E VINCULA
+        # Usamos o CPF (sem pontos/traços) como username padrão
+        username = cpf_digitado.replace('.', '').replace('-', '')
+        
+        # Criação do usuário
+        novo_user = User.objects.create_user(
+            username=username,
+            password=senha,
+            email=funcionario.email
+        )
+        
+        # Vincula o usuário ao funcionário já existente e salva
+        funcionario.user = novo_user
+        funcionario.save()
+
+        messages.success(request, "Acesso criado com sucesso! Agora você já pode entrar no sistema.")
+        return redirect('login')
+
+    # Corrigido: 'ore' para 'core'
+    return render(request, 'registration/primeiro_acesso.html')
