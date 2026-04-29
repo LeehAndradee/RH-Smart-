@@ -3,55 +3,140 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Primeiro Acesso - RH Smart</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: #f8f9fa; height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .register-card { max-width: 450px; width: 100%; padding: 30px; border-radius: 12px; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .btn-primary { background-color: #1a2a4e; border: none; }
+        body {
+            background-color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        .login-container {
+            max-width: 1100px;
+            margin: auto;
+        }
+        .brand-section {
+            text-align: center;
+            padding: 20px;
+        }
+        .brand-logo {
+            max-width: 350px;
+            margin-bottom: 20px;
+        }
+        .brand-title {
+            color: #1a2a4e;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .login-card {
+            background: #e9ecef;
+            border-radius: 8px;
+            padding: 40px;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .login-card h2 {
+            color: #1a2a4e;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .input-group-text {
+            background-color: white;
+            border-right: none;
+            color: #6c757d;
+        }
+        .form-control {
+            border-left: none;
+            padding: 12px;
+        }
+        .btn-entrar {
+            background-color: #1a2a4e;
+            color: white;
+            padding: 12px;
+            font-weight: 700;
+            width: 100%;
+            border-radius: 6px;
+            margin-top: 20px;
+            transition: 0.3s;
+            border: none;
+        }
+        .btn-entrar:hover {
+            background-color: #2a3d66;
+            color: white;
+        }
+        .link-footer {
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
 
-<div class="register-card">
-    <div class="text-center mb-4">
-        <h4 class="fw-bold">Primeiro Acesso</h4>
-        <p class="text-muted small">Ative sua conta informando seu CPF</p>
+<div class="container login-container">
+    <div class="row align-items-center">
+        
+        <div class="col-lg-7 brand-section">
+            <img src="{% static 'img/logo.png' %}" alt="Logo RH Smart" class="brand-logo img-fluid">
+            <h5 class="brand-title">A Conexão Inteligente entre o RH e Você</h5>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card login-card">
+                <h2>Primeiro Acesso</h2>
+                <p class="text-center text-muted small mb-4">Ative sua conta informando seus dados</p>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-3" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                        <input type="text" name="cpf" class="form-control" placeholder="Seu CPF" required value="{{ cpf|default:'' }}">
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                        <input type="password" name="password" class="form-control" placeholder="Nova Senha" required>
+                    </div>
+
+                    <div class="input-group mb-2">
+                        <span class="input-group-text"><i class="fas fa-check-double"></i></span>
+                        <input type="password" name="confirm_password" class="form-control" placeholder="Confirmar Senha" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-entrar">
+                        <i class="fas fa-user-check me-1"></i> Criar Minha Conta
+                    </button>
+
+                    <div class="text-center mt-4">
+                        <a href="{% url 'login' %}" class="link-footer">
+                            <i class="fas fa-arrow-left me-1"></i> Voltar para o Login
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} small">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
-
-    <form method="post">
-        {% csrf_token %}
-        <div class="mb-3">
-            <label class="form-label small fw-bold">CPF</label>
-            <input type="text" name="cpf" class="form-control" placeholder="000.000.000-00" required value="{{ cpf|default:'' }}">
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label small fw-bold">Nova Senha</label>
-            <input type="password" name="password" class="form-control" placeholder="Mínimo 6 caracteres" required>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label small fw-bold">Confirmar Senha</label>
-            <input type="password" name="confirm_password" class="form-control" placeholder="Repita a senha" required>
-        </div>
-
-        <button type="submit" class="btn btn-primary w-100 py-2">
-            <i class="fas fa-check-circle me-1"></i> Criar meu acesso
-        </button>
-
-        <div class="text-center mt-3">
-            <a href="{% url 'login' %}" class="text-decoration-none small text-muted">Voltar para o login</a>
-        </div>
-    </form>
 </div>
 
+<footer class="fixed-bottom bg-dark text-white text-center py-2" style="opacity: 0.8; font-size: 0.8rem;">
+    RH SMART - 2026 &copy; Todos os direitos reservados.
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

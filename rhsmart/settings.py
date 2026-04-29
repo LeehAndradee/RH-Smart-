@@ -103,6 +103,16 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+# settings.py (Exemplo para usar o Gmail ou Mailtrap)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com' # Ou o host do seu provedor
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'seu-rh@empresa.com'
+EMAIL_HOST_PASSWORD = 'sua-senha-de-aplicativo' # Não é a senha normal!
+
+# Faz o e-mail aparecer no terminal do VS Code em vez de enviar de verdade
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 

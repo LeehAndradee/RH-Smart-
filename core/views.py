@@ -540,6 +540,8 @@ def imprimir_holerite(request, folha_id):
     return render(request, 'core/folha/folha_impressao.html', {'folha': folha})
 
 
+# --- AUTENTICAÇÃO DE PRIMEIRO ACESSO ---
+
 def primeiro_acesso_view(request):
     if request.method == 'POST':
         cpf_digitado = request.POST.get('cpf').strip()
@@ -588,3 +590,21 @@ def primeiro_acesso_view(request):
 
     # Corrigido: 'ore' para 'core'
     return render(request, 'registration/primeiro_acesso.html')
+
+def password_reset_view(request):
+    if request.method == 'POST':
+        email_digitado = request.POST.get('email')
+        
+        # Verifica se o e-mail existe no cadastro de funcionários
+        existe = Funcionario.objects.filter(email=email_digitado).exists()
+        
+        if existe:
+            messages.success(request, "Se o e-mail estiver correto, você receberá um link em instantes!")
+        else:
+            # Por segurança, sistemas profissionais costumam dar a mesma mensagem 
+            # para não confirmar quais e-mails existem no banco
+            messages.info(request, "Instruções enviadas para o e-mail informado.")
+            
+        return redirect('login')
+
+    return render(request, 'registration/password_reset.html')
