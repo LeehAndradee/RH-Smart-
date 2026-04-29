@@ -72,7 +72,7 @@
 </head>
 
 <body>
-    
+
 <div class="sidebar">
     <h4>🚀 RH Smart</h4>
     <hr>
@@ -132,9 +132,13 @@
                 <strong>Olá, {{ request.user.username }} 👋</strong>
             </div>
             <div>
-                <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger">
-                    <i class="fas fa-sign-out-alt"></i> Sair
-                </a>
+                <!-- Troque o <a href="{% url 'logout' %}"> por este formulário -->
+                <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
+                </form>
             </div>
         </div>
 

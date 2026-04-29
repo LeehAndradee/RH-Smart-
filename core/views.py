@@ -12,6 +12,12 @@ from django.db.models import Count, Sum, Avg
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
+from django.core.mail import send_mail 
+from django.conf import settings
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+from django.urls import reverse
 
 def eh_master(user):
     # Checa se o usuário está logado e se o perfil dele é MASTER
@@ -588,23 +594,47 @@ def primeiro_acesso_view(request):
         messages.success(request, "Acesso criado com sucesso! Agora você já pode entrar no sistema.")
         return redirect('login')
 
-    # Corrigido: 'ore' para 'core'
+    
     return render(request, 'registration/primeiro_acesso.html')
 
 def password_reset_view(request):
     if request.method == 'POST':
         email_digitado = request.POST.get('email')
         
-        # Verifica se o e-mail existe no cadastro de funcionários
-        existe = Funcionario.objects.filter(email=email_digitado).exists()
+        # 1. Busca o funcionário pelo e-mail
+        funcionario = Funcionario.objects.filter(email=email_digitado).first()
         
-        if existe:
+        # O link só deve ser gerado se o funcionário existir E tiver um usuário vinculado
+        if funcionario and funcionario.user:
+            user = funcionario.user
+            
+            # 2. GERAÇÃO DOS CÓDIGOS DE SEGURANÇA
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+            
+            # 3. MONTAGEM DA URL REAL
+            # 'password_reset_confirm' deve ser o nome da sua rota no urls.py
+            protocol = 'https' if request.is_secure() else 'http'
+            domain = request.get_host()
+            link_path = reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+            
+            link_real = f"{protocol}://{domain}{link_path}"
+            
+            # 4. ENVIO DO E-MAIL (Aparecerá no seu console)
+            send_mail(
+                subject='Recuperação de Senha - RH Smart',
+                message=f'Olá, {funcionario.nome}!\n\nRecebemos um pedido para redefinir sua senha. Clique no link abaixo para criar uma nova:\n\n{link_real}\n\nSe você não solicitou isso, ignore este e-mail.',
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[email_digitado],
+                fail_silently=False,
+            )
+            
             messages.success(request, "Se o e-mail estiver correto, você receberá um link em instantes!")
         else:
-            # Por segurança, sistemas profissionais costumam dar a mesma mensagem 
-            # para não confirmar quais e-mails existem no banco
+            # Mantemos a mensagem genérica por segurança (não confirmar se e-mail existe)
             messages.info(request, "Instruções enviadas para o e-mail informado.")
             
         return redirect('login')
 
+    # Ajuste o caminho se o seu template estiver em 'core/registration/...'
     return render(request, 'registration/password_reset.html')
