@@ -28,38 +28,59 @@ def eh_master(user):
 # No core/views.py, dentro da dashboard_view:
 
 @login_required
+@login_required
 def dashboard_view(request):
+    # 1. Identificamos o perfil do usuário
+    perfil = request.user.perfil
+    
+    # --- DASHBOARD PARA MASTER (RH/ADMIN) ---
+    if perfil.tipo_acesso == 'MASTER':
+        total_funcionarios = Funcionario.objects.count()
+        total_cargos = Cargo.objects.count()
+        total_departamentos = Departamento.objects.count()
 
-    total_funcionarios = Funcionario.objects.count()
-    total_cargos = Cargo.objects.count()
-    total_departamentos = Departamento.objects.count()
+        total_salarios = Funcionario.objects.aggregate(
+            total=Sum('salario_base')
+        )['total'] or 0
 
-    total_salarios = Funcionario.objects.aggregate(
-        total=Sum('salario_base')
-    )['total'] or 0
+        ultimos_funcionarios = Funcionario.objects.order_by('-id')[:5]
+        
+        mes_atual = datetime.now().month
+        aniversariantes = Funcionario.objects.filter(data_nascimento__month=mes_atual)
+        
+        faltas = Falta.objects.select_related('funcionario').order_by('-data')[:5]
 
-    # Últimos funcionários cadastrados
-    ultimos_funcionarios = Funcionario.objects.order_by('-id')[:5]
+        context = {
+            'total_funcionarios': total_funcionarios,
+            'total_cargos': total_cargos,
+            'total_departamentos': total_departamentos,
+            'total_salarios': total_salarios,
+            'ultimos_funcionarios': ultimos_funcionarios,
+            'aniversariantes': aniversariantes,
+            'faltas': faltas,
+        }
+        return render(request, 'dashboard.html', context)
 
-    # Aniversariantes
-    mes_atual = datetime.now().month
-    aniversariantes = Funcionario.objects.filter(data_nascimento__month=mes_atual)
+    # --- DASHBOARD PARA USUÁRIO (FUNCIONÁRIO) ---
+    else:
+        # Buscamos o registro de funcionário ligado a esse usuário logado
+        # Se não houver um funcionário vinculado ao User, ele retorna 404
+        funcionario = get_object_or_404(Funcionario, user=request.user)
 
-    # Faltas recentes
-    faltas = Falta.objects.select_related('funcionario').order_by('-data')[:5]
+        # Pegamos apenas as informações dele
+        minhas_faltas = Falta.objects.filter(funcionario=funcionario).order_by('-data')[:5]
+        # Vamos ordenar primeiro pelo ano mais novo e depois pelo mês mais novo
+        meus_holerites = FolhaPagamento.objects.filter(funcionario=funcionario).order_by('-ano', '-mes')[:3]
 
-    context = {
-        'total_funcionarios': total_funcionarios,
-        'total_cargos': total_cargos,
-        'total_departamentos': total_departamentos,
-        'total_salarios': total_salarios,
-        'ultimos_funcionarios': ultimos_funcionarios,
-        'aniversariantes': aniversariantes,
-        'faltas': faltas,
-    }
-
-    return render(request, 'dashboard.html', context)
-
+        context = {
+            'funcionario': funcionario,
+            'minhas_faltas': minhas_faltas,
+            'meus_holerites': meus_holerites,
+            # Você pode adicionar um aviso de aniversário
+            'e_aniversariante': funcionario.data_nascimento.month == datetime.now().month
+        }
+        return render(request, 'dashboard.html', context)
+        
 # --- FUNCIONÁRIOS ---
 @login_required
 def funcionarios_view(request):
