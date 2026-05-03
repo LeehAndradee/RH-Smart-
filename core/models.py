@@ -45,6 +45,7 @@ class Funcionario(models.Model):
     # --- VÍNCULO COM O USUÁRIO DO DJANGO ---
     # No seu models.py ajuste:
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil', null=True, blank=True)
+    ativo = models.BooleanField(default=True, verbose_name="Registro Ativo")
     
     # --- CONTROLE DE ACESSO SIMPLIFICADO ---
     TIPO_ACESSO_CHOICES = [
@@ -104,7 +105,6 @@ class Evento(models.Model):
     TIPOS = [('PROVENTO', 'Provento (+)'), ('DESCONTO', 'Desconto (-)')]
     nome = models.CharField(max_length=100)
     tipo = models.CharField(max_length=10, choices=TIPOS)
-    percentual = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     valor_fixo = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     aplica_13 = models.BooleanField(default=False)
@@ -156,6 +156,7 @@ class FolhaPagamento(models.Model):
     data_rescisao = models.DateField(null=True, blank=True)
     parcela_13o = models.IntegerField(choices=PARCELAS_13O, null=True, blank=True)
     motivo_rescisao = models.CharField(max_length=50, null=True, blank=True)
+    status = models.BooleanField(default=False, verbose_name="Folha Fechada/Liberada")
     
     # Campos de Snapshot e Resultados
     salario_base_Snapshot = models.DecimalField(max_digits=10, decimal_places=2, default=0)

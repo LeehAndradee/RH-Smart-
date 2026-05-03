@@ -42,13 +42,14 @@
                                     <i class="fas fa-tag"></i>
                                 </span>
                                 <input type="text" name="nome" class="form-control"
-                                       value="{{ evento.nome|default:'' }}" required>
+                                       value="{{ evento.nome|default:'' }}" required 
+                                       placeholder="Ex: Vale Alimentação, Bônus, etc.">
                             </div>
                         </div>
 
                         <!-- TIPO -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Tipo</label>
+                        <div class="col-md-7">
+                            <label class="form-label fw-semibold">Tipo de Lançamento</label>
 
                             <div class="d-flex gap-3 mt-2">
 
@@ -57,11 +58,11 @@
                                            type="radio"
                                            name="tipo"
                                            value="P"
-                                           {% if evento.tipo == 'P' %}checked{% endif %}>
+                                           {% if evento.tipo == 'P' or not evento.id %}checked{% endif %}>
                                     <label class="form-check-label">
                                         <i class="fas fa-arrow-up text-success"></i>
                                         <strong>Provento</strong><br>
-                                        <small class="text-muted">Adiciona valor ao salário</small>
+                                        <small class="text-muted">Soma ao salário</small>
                                     </label>
                                 </div>
 
@@ -74,31 +75,18 @@
                                     <label class="form-check-label">
                                         <i class="fas fa-arrow-down text-danger"></i>
                                         <strong>Desconto</strong><br>
-                                        <small class="text-muted">Reduz valor do salário</small>
+                                        <small class="text-muted">Subtrai do salário</small>
                                     </label>
                                 </div>
 
                             </div>
                         </div>
 
-                        <!-- VALORES -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Configuração de Valor</label>
+                        <!-- VALORES FIXOS -->
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold">Valor do Evento</label>
 
                             <div class="card p-3 bg-light border-0">
-
-                                <div class="mb-3">
-                                    <label class="form-label small text-muted">Percentual (%)</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i class="fas fa-percentage"></i>
-                                        </span>
-                                        <input type="number" step="0.0001" name="percentual"
-                                               class="form-control"
-                                               value="{{ evento.percentual|stringformat:'s'|default:'' }}">
-                                    </div>
-                                </div>
-
                                 <div>
                                     <label class="form-label small text-muted">Valor Fixo (R$)</label>
                                     <div class="input-group">
@@ -106,11 +94,12 @@
                                             <i class="fas fa-dollar-sign"></i>
                                         </span>
                                         <input type="number" step="0.01" name="valor_fixo"
-                                               class="form-control"
+                                               class="form-control" required
+                                               placeholder="0,00"
                                                value="{{ evento.valor_fixo|stringformat:'.2f'|default:'' }}">
                                     </div>
+                                    <div class="form-text small">Defina o valor em Reais.</div>
                                 </div>
-
                             </div>
                         </div>
 
@@ -120,8 +109,8 @@
                     <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
 
                         <small class="text-muted">
-                            <i class="fas fa-info-circle"></i>
-                            Preencha ao menos percentual ou valor fixo
+                            <i class="fas fa-check-circle"></i>
+                            O valor será aplicado integralmente na folha.
                         </small>
 
                         <div class="d-flex gap-2">
@@ -142,28 +131,28 @@
         </div>
     </div>
 
-    <!-- SIDEBAR (UX PROFISSIONAL) -->
+    <!-- SIDEBAR -->
     <div class="col-md-4">
 
         <div class="card shadow border-0 mb-3">
             <div class="card-body">
                 <h6 class="text-uppercase text-muted mb-3">
-                    <i class="fas fa-lightbulb"></i> Dicas
+                    <i class="fas fa-lightbulb"></i> Orientações
                 </h6>
 
-                <ul class="small text-muted">
-                    <li>Use percentual para cálculos automáticos</li>
-                    <li>Valor fixo é aplicado diretamente</li>
-                    <li>Evite preencher ambos ao mesmo tempo</li>
+                <ul class="small text-muted ps-3">
+                    <li class="mb-2"><strong>Proventos</strong> são benefícios ou bônus que aumentam o salário líquido.</li>
+                    <li class="mb-2"><strong>Descontos</strong> são deduções fixas (convênios, taxas) que reduzem o salário líquido.</li>
+                    <li>O valor fixo preenchido será o padrão para todos os lançamentos deste evento.</li>
                 </ul>
             </div>
         </div>
 
-        <div class="card shadow border-0">
+        <div class="card shadow border-0 bg-primary text-white">
             <div class="card-body text-center">
-                <i class="fas fa-file-invoice-dollar fa-2x text-primary mb-2"></i>
-                <p class="small text-muted mb-0">
-                    Eventos impactam diretamente na folha salarial.
+                <i class="fas fa-shield-alt fa-2x mb-2"></i>
+                <p class="small mb-0">
+                    Alterações em eventos existentes não mudam folhas de pagamento que já foram fechadas.
                 </p>
             </div>
         </div>

@@ -28,10 +28,10 @@ def eh_master(user):
 # No core/views.py, dentro da dashboard_view:
 
 @login_required
-@login_required
 def dashboard_view(request):
     # 1. Identificamos o perfil do usuário
     perfil = request.user.perfil
+    hoje = datetime.now()
     
     # --- DASHBOARD PARA MASTER (RH/ADMIN) ---
     if perfil.tipo_acesso == 'MASTER':
@@ -39,9 +39,13 @@ def dashboard_view(request):
         total_cargos = Cargo.objects.count()
         total_departamentos = Departamento.objects.count()
 
-        total_salarios = Funcionario.objects.aggregate(
-            total=Sum('salario_base')
-        )['total'] or 0
+        # Aqui definimos a variável que estava faltando:
+        quant_folhas_mes = FolhaPagamento.objects.filter(
+            mes=hoje.month, 
+            ano=hoje.year
+        ).count()
+
+        
 
         ultimos_funcionarios = Funcionario.objects.order_by('-id')[:5]
         
@@ -54,7 +58,7 @@ def dashboard_view(request):
             'total_funcionarios': total_funcionarios,
             'total_cargos': total_cargos,
             'total_departamentos': total_departamentos,
-            'total_salarios': total_salarios,
+            'quant_folhas_mes': quant_folhas_mes,
             'ultimos_funcionarios': ultimos_funcionarios,
             'aniversariantes': aniversariantes,
             'faltas': faltas,
@@ -70,7 +74,11 @@ def dashboard_view(request):
         # Pegamos apenas as informações dele
         minhas_faltas = Falta.objects.filter(funcionario=funcionario).order_by('-data')[:5]
         # Vamos ordenar primeiro pelo ano mais novo e depois pelo mês mais novo
-        meus_holerites = FolhaPagamento.objects.filter(funcionario=funcionario).order_by('-ano', '-mes')[:3]
+        # MUDANÇA AQUI: Adicionamos o filtro status=True
+        meus_holerites = FolhaPagamento.objects.filter(
+            funcionario=funcionario, 
+            status=True # <-- Só vê se estiver fechada
+        ).order_by('-ano', '-mes')[:3]
 
         context = {
             'funcionario': funcionario,
@@ -149,10 +157,34 @@ def funcionario_update(request, id):
     })
 
 @user_passes_test(eh_master, login_url='dashboard')
+
+@login_required
 def funcionario_delete(request, id):
+    # 1. Busca o funcionário ou dá erro 404 se não existir
     funcionario = get_object_or_404(Funcionario, id=id)
-    funcionario.delete()
-    return redirect('funcionarios_view')
+    
+    # 2. Segurança: Apenas MASTER pode desativar alguém
+    if request.user.perfil.tipo_acesso != 'MASTER':
+        messages.error(request, "Você não tem permissão para realizar esta ação.")
+        return redirect('dashboard')
+
+    # 3. Só processa a "exclusão" se for um método POST (por segurança)
+    if request.method == 'POST':
+        # DESATIVAÇÃO DO FUNCIONÁRIO
+        funcionario.ativo = False
+        funcionario.save()
+
+        # DESATIVAÇÃO DO LOGIN (Se ele tiver um usuário vinculado)
+        if funcionario.user:
+            user = funcionario.user
+            user.is_active = False  # O usuário perde o acesso ao sistema na hora
+            user.save()
+
+        messages.success(request, f"O colaborador {funcionario.nome} foi desativado com sucesso!")
+        return redirect('funcionarios_view')
+
+    # Se alguém tentar acessar o link direto via GET, mandamos para uma página de confirmação
+    return render(request, 'core/funcionario/confirm_delete.html', {'funcionario': funcionario})
 
 @user_passes_test(eh_master, login_url='dashboard')
 def funcionario_create(request):

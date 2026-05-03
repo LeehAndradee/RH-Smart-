@@ -2,33 +2,38 @@
 
 {% block content %}
 <div class="container mt-4">
+    <!-- Cabeçalho da Página -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="mb-0">Eventos</h2>
-            <p class="text-muted">Gestão de Proventos e Descontos para a Folha</p>
+            <h2 class="mb-0">Eventos da Folha</h2>
+            <p class="text-muted">Gestão de Proventos (acréscimos) e Descontos fixos.</p>
         </div>
         <a href="{% url 'evento_create' %}" class="btn btn-primary shadow-sm">
             <i class="fas fa-plus"></i> Novo Evento
         </a>
     </div>
 
+    <!-- Tabela de Eventos -->
     <div class="card shadow border-0">
-        <div class="card-body p-0"> <div class="table-responsive">
-                <table class="table table-hover mb-0">
+        <div class="card-body p-0"> 
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th class="ps-4">Nome</th>
+                            <th class="ps-4">Nome do Evento</th>
                             <th>Tipo</th>
-                            <th>Valor Padrão</th>
+                            <th>Valor Fixo</th>
                             <th class="text-center pe-4">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for evento in eventos %}
                         <tr>
-                            <td class="ps-4 align-middle fw-bold">{{ evento.nome }}</td>
-                            <td class="align-middle">
-                                {% if evento.tipo == 'PROVENTO' %}
+                            <td class="ps-4 fw-bold text-dark">{{ evento.nome }}</td>
+                            
+                            <!-- Coluna de Tipo com Cores Corrigidas -->
+                            <td>
+                                {% if evento.tipo == 'PROVENTO' or evento.tipo == 'P' %}
                                     <span class="badge bg-success-subtle text-success border border-success">
                                         <i class="fas fa-arrow-up small"></i> Provento
                                     </span>
@@ -38,27 +43,29 @@
                                     </span>
                                 {% endif %}
                             </td>
-                            <td class="align-middle">
-                               R$ {{ evento.valor_fixo|default:"0.00" }}
-                            </td>
-                            <td class="text-center">
-                                <div class="btn-group">
 
+                            <!-- Coluna de Valor (Apenas Fixo) -->
+                            <td>
+                                <span class="fw-bold text-secondary">
+                                    R$ {{ evento.valor_fixo|default:"0.00" }}
+                                </span>
+                            </td>
+
+                            <!-- Ações -->
+                            <td class="text-center pe-4">
+                                <div class="btn-group">
                                     <a href="{% url 'evento_update' evento.id %}" 
-                                    class="btn btn-sm btn-outline-warning"
-                                    title="Editar"
-                                    data-bs-toggle="tooltip">
-                                        <i class="fas fa-edit me-1"></i> Editar
+                                       class="btn btn-sm btn-outline-warning" 
+                                       title="Editar">
+                                        <i class="fas fa-edit"></i> Editar
                                     </a>
 
                                     <a href="{% url 'evento_delete' evento.id %}" 
-                                    class="btn btn-sm btn-outline-danger"
-                                    title="Excluir"
-                                    data-bs-toggle="tooltip"
-                                    onclick="return confirm('Excluir {{ evento.nome }}?')">
-                                        <i class="fas fa-trash me-1"></i> Excluir
+                                       class="btn btn-sm btn-outline-danger" 
+                                       title="Excluir"
+                                       onclick="return confirm('Tem certeza que deseja excluir o evento {{ evento.nome }}?')">
+                                        <i class="fas fa-trash"></i> Excluir
                                     </a>
-
                                 </div>
                             </td>
                         </tr>
@@ -67,8 +74,8 @@
                             <td colspan="4" class="text-center py-5">
                                 <div class="text-muted">
                                     <i class="fas fa-info-circle fa-2x mb-3"></i>
-                                    <p>Nenhum evento cadastrado até o momento.</p>
-                                    <a href="{% url 'evento_create' %}" class="btn btn-sm btn-primary">Cadastrar Primeiro</a>
+                                    <p>Nenhum evento fixo cadastrado.</p>
+                                    <a href="{% url 'evento_create' %}" class="btn btn-sm btn-primary">Cadastrar Agora</a>
                                 </div>
                             </td>
                         </tr>

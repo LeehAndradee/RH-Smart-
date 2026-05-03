@@ -5,45 +5,69 @@
 
 <div class="container-fluid mt-4">
 
+    <!-- ============================================================== -->
+    <!-- BANNER DE BOAS-VINDAS -->
+    <!-- ============================================================== -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm p-4" style="background: linear-gradient(to right, #1a2a4e, #2a3d66); color: white; border-radius: 15px;">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h2 class="fw-bold mb-1">Olá, {{ funcionario.nome }}! 👋</h2>
+                        {% if request.user.perfil.tipo_acesso == 'MASTER' %}
+                            <p class="mb-0 opacity-75">Administrador do RH Smart</p>
+                        {% else %}
+                            <p class="mb-0 opacity-75">Seu portal do colaborador está pronto para uso.</p>
+                        {% endif %}
+                    </div>
+                    {% if e_aniversariante %}
+                    <div class="text-center bg-white text-primary p-2 rounded shadow-sm">
+                        <i class="fas fa-birthday-cake d-block mb-1"></i>
+                        <small class="fw-bold">Parabéns!</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
     {% if request.user.perfil.tipo_acesso == 'MASTER' %}
         <!-- ============================================================== -->
         <!-- PAINEL ADMINISTRATIVO (VISÃO RH) -->
         <!-- ============================================================== -->
-        <h3 class="mb-4">🏛️ Painel Administrativo - RH Smart</h3>
-
-        <!-- CARDS -->
+        
         <div class="row g-4 mb-4">
             <div class="col-md-3">
-                <div class="card shadow text-center p-3">
+                <div class="card shadow border-0 text-center p-3 h-100">
                     <h6 class="text-muted">Funcionários</h6>
-                    <h2>{{ total_funcionarios }}</h2>
+                    <h2 class="fw-bold">{{ total_funcionarios }}</h2>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card shadow text-center p-3">
+                <div class="card shadow border-0 text-center p-3 h-100">
                     <h6 class="text-muted">Departamentos</h6>
-                    <h2>{{ total_departamentos }}</h2>
+                    <h2 class="fw-bold">{{ total_departamentos }}</h2>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card shadow text-center p-3">
+                <div class="card shadow border-0 text-center p-3 h-100">
                     <h6 class="text-muted">Cargos</h6>
-                    <h2>{{ total_cargos }}</h2>
+                    <h2 class="fw-bold">{{ total_cargos }}</h2>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card shadow text-center p-3 bg-warning text-dark">
-                    <h6>Total da Folha</h6>
-                    <h4>R$ {{ total_salarios|floatformat:2 }}</h4>
+                <div class="card shadow border-0 text-center p-3 bg-warning text-dark h-100">
+                    <h6 class="fw-bold">Folhas Processadas</h6>
+                    <h2 class="fw-bold">{{ quant_folhas_mes }}</h2>
+                    <small>Competência: {{ hoje|date:"M/Y" }}</small>
                 </div>
             </div>
         </div>
 
-        <!-- TABELAS PRINCIPAIS -->
         <div class="row g-4">
             <div class="col-md-6">
-                <div class="card shadow p-3">
-                    <h5>👥 Últimos Funcionários</h5>
+                <div class="card shadow border-0 p-3 h-100">
+                    <h5 class="fw-bold mb-3">👥 Últimos Funcionários</h5>
                     <table class="table table-striped">
                         <thead>
                             <tr><th>Nome</th><th>Cargo</th></tr>
@@ -63,8 +87,8 @@
             </div>
 
             <div class="col-md-6">
-                <div class="card shadow p-3">
-                    <h5>⚠️ Faltas Recentes</h5>
+                <div class="card shadow border-0 p-3 h-100">
+                    <h5 class="fw-bold mb-3">⚠️ Faltas Recentes</h5>
                     <table class="table table-striped">
                         <thead>
                             <tr><th>Funcionário</th><th>Data</th></tr>
@@ -76,7 +100,7 @@
                                 <td>{{ f.data|date:"d/m/Y" }}</td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="2">Sem faltas</td></tr>
+                            <tr><td colspan="2">Sem faltas recentes</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -84,20 +108,19 @@
             </div>
         </div>
 
-        <!-- ANIVERSARIANTES -->
-        <div class="row mt-4">
+        <div class="row mt-4 mb-5">
             <div class="col-md-12">
-                <div class="card shadow p-3">
-                    <h5>🎂 Aniversariantes do Mês</h5>
-                    <table class="table">
+                <div class="card shadow border-0 p-3">
+                    <h5 class="fw-bold mb-3">🎂 Aniversariantes de {{ hoje|date:"F" }}</h5>
+                    <table class="table mb-0">
                         <tbody>
                             {% for f in aniversariantes %}
                             <tr>
                                 <td>{{ f.nome }}</td>
-                                <td>{{ f.data_nascimento|date:"d/m" }}</td>
+                                <td class="text-end fw-bold">{{ f.data_nascimento|date:"d/m" }}</td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="2">Nenhum aniversariante</td></tr>
+                            <tr><td colspan="2" class="text-center text-muted">Nenhum aniversariante</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -109,55 +132,31 @@
         <!-- ============================================================== -->
         <!-- PAINEL DO COLABORADOR (VISÃO USUÁRIO) -->
         <!-- ============================================================== -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card border-0 shadow-sm p-4" style="background: linear-gradient(to right, #1a2a4e, #2a3d66); color: white; border-radius: 15px;">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <h2 class="fw-bold">Olá, {{ funcionario.nome }}! 👋</h2>
-                            <p class="mb-0 opacity-75">Seu portal do colaborador está pronto para uso.</p>
-                        </div>
-                        {% if e_aniversariante %}
-                        <div class="text-center bg-white text-primary p-2 rounded shadow-sm">
-                            <i class="fas fa-birthday-cake d-block mb-1"></i>
-                            <small class="fw-bold">Parabéns!</small>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- CARDS DE ACESSO RÁPIDO -->
+        
         <div class="row text-center g-4">
-            <div class="col-md-4">
-                <div class="card shadow-sm border-0 p-3 h-100">
+            <!-- Card Holerites (Ajustado para col-md-6) -->
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0 p-4 h-100">
                     <i class="fas fa-file-invoice-dollar fa-3x text-primary mb-3"></i>
                     <h5>Meus Holerites</h5>
-                    <p class="small text-muted">Acesse seus pagamentos mensais.</p>
-                    <a href="{% url 'folha_view' %}" class="btn btn-outline-primary btn-sm">Visualizar</a>
+                    <p class="small text-muted">Acesse seus pagamentos mensais e históricos.</p>
+                    <a href="{% url 'folha_view' %}" class="btn btn-outline-primary btn-sm mt-auto">Visualizar Holerites</a>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card shadow-sm border-0 p-3 h-100">
-                    <i class="fas fa-calendar-times fa-3x text-warning mb-3"></i>
-                    <h5>Minhas Faltas</h5>
-                    <p class="small text-muted">Acompanhe seu histórico de faltas.</p>
-                    <a href="#" class="btn btn-outline-warning btn-sm">Ver Detalhes</a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card shadow-sm border-0 p-3 h-100">
+
+            <!-- Card Meus Dados (Ajustado para col-md-6) -->
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0 p-4 h-100">
                     <i class="fas fa-user-circle fa-3x text-success mb-3"></i>
                     <h5>Meus Dados</h5>
-                    <p class="small text-muted">Confira suas informações.</p>
-                    <a href="{% url 'funcionarios_view' %}" class="btn btn-outline-success btn-sm">Meu Perfil</a>
+                    <p class="small text-muted">Confira suas informações cadastrais e cargo.</p>
+                    <a href="{% url 'funcionarios_view' %}" class="btn btn-outline-success btn-sm mt-auto">Meu Perfil</a>
                 </div>
             </div>
         </div>
 
-        <!-- TABELA DE ATIVIDADE RECENTE -->
-        <div class="card shadow-sm mt-4 border-0">
+        <!-- LISTA DE HOLERITES RECENTES -->
+        <div class="card shadow-sm mt-4 border-0 mb-5">
             <div class="card-header bg-white border-0 py-3">
                 <h5 class="mb-0 fw-bold">📅 Holerites Recentes</h5>
             </div>
@@ -170,8 +169,20 @@
                         {% for holerite in meus_holerites %}
                         <tr>
                             <td>{{ holerite.mes }}/{{ holerite.ano }}</td>
-                            <td><span class="badge bg-success">Liberado</span></td>
-                            <td class="text-end"><button class="btn btn-sm btn-light"><i class="fas fa-download"></i></button></td>
+                            <td>
+                                {% if holerite.status %}
+                                    <span class="badge bg-success">Liberado</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Em processamento</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if holerite.status %}
+                                    <button class="btn btn-sm btn-light border"><i class="fas fa-download"></i></button>
+                                {% else %}
+                                    <button class="btn btn-sm btn-light border" disabled title="Aguardando liberação"><i class="fas fa-lock"></i></button>
+                                {% endif %}
+                            </td>
                         </tr>
                         {% empty %}
                         <tr><td colspan="3" class="text-center text-muted">Nenhum registro encontrado.</td></tr>
