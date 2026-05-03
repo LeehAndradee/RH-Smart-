@@ -153,12 +153,17 @@ class FolhaPagamento(models.Model):
 
     @property
     def valor_total_faltas(self):
-        """Retorna o valor total em R$ das faltas do período."""
-        faltas_count = self.total_faltas
-        if faltas_count > 0:
-            valor_dia = self.salario_base_Snapshot / Decimal('30')
-            return (valor_dia * Decimal(str(faltas_count)))
-        return Decimal('0.00')
+        """Soma o valor exato digitado no registro de cada falta."""
+        from .models import Falta
+        faltas = Falta.objects.filter(
+            funcionario=self.funcionario,
+            mes_referencia=self.mes,
+            ano_referencia=self.ano,
+            justificada=False
+        )
+        # Em vez de dividir o salário, ele soma o campo valor_desconto de cada falta
+        total = sum(f.valor_desconto for f in faltas)
+        return Decimal(str(total)) if total else Decimal('0.00')
 
     # Dados de Identificação
     funcionario = models.ForeignKey('Funcionario', on_delete=models.CASCADE)
@@ -247,15 +252,11 @@ class FolhaPagamento(models.Model):
                 else:
                     descontos_adicionais += item.valor
 
-        # 3. Processa Faltas Automáticas (Baseado nos registros de Falta)
+        # 3. Processa Faltas Automáticas
         if self.tipo == 'MENSAL':
-            # FIX: Agora filtrando pelos campos de referência corretos
-            faltas_count = self.total_faltas 
-            if faltas_count > 0:
-                valor_dia = self.salario_base_Snapshot / 30
-                descontos_adicionais += (valor_dia * Decimal(str(faltas_count)))
-
-        self.salario_bruto = bruto
+            valor_faltas = self.valor_total_faltas # Puxa a soma que fizemos acima
+            if valor_faltas > 0:
+                descontos_adicionais += valor_faltas
 
         # 4. Cálculos de Impostos
         if descontos_legais_ativos:

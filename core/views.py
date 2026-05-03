@@ -26,31 +26,34 @@ def eh_master(user):
 
 
 # --- DASHBOARD ---
-@login_required
 def dashboard_view(request):
-    # 1. Identificamos o perfil do usuário
     perfil = request.user.perfil
     hoje = datetime.now()
     
+    # --- LÓGICA DE COMPETÊNCIA ANTERIOR ---
+    # Se estamos em Maio, a competência alvo é Abril.
+    # Se estamos em Janeiro, a competência alvo é Dezembro do ano anterior.
+    if hoje.month == 1:
+        mes_ref = 12
+        ano_ref = hoje.year - 1
+    else:
+        mes_ref = hoje.month - 1
+        ano_ref = hoje.year
+
     # --- DASHBOARD PARA MASTER (RH/ADMIN) ---
     if perfil.tipo_acesso == 'MASTER':
         total_funcionarios = Funcionario.objects.count()
         total_cargos = Cargo.objects.count()
         total_departamentos = Departamento.objects.count()
 
-        # Aqui definimos a variável que estava faltando:
+        # Contador focado na competência do mês passado
         quant_folhas_mes = FolhaPagamento.objects.filter(
-            mes=hoje.month, 
-            ano=hoje.year
+            mes=mes_ref, 
+            ano=ano_ref
         ).count()
 
-        
-
         ultimos_funcionarios = Funcionario.objects.order_by('-id')[:5]
-        
-        mes_atual = datetime.now().month
-        aniversariantes = Funcionario.objects.filter(data_nascimento__month=mes_atual)
-        
+        aniversariantes = Funcionario.objects.filter(data_nascimento__month=hoje.month)
         faltas = Falta.objects.select_related('funcionario').order_by('-data')[:5]
 
         context = {
@@ -58,36 +61,34 @@ def dashboard_view(request):
             'total_cargos': total_cargos,
             'total_departamentos': total_departamentos,
             'quant_folhas_mes': quant_folhas_mes,
+            'mes_ref': mes_ref,
+            'ano_ref': ano_ref,
             'ultimos_funcionarios': ultimos_funcionarios,
             'aniversariantes': aniversariantes,
             'faltas': faltas,
+            'hoje': hoje,
         }
         return render(request, 'dashboard.html', context)
 
     # --- DASHBOARD PARA USUÁRIO (FUNCIONÁRIO) ---
     else:
-        # Buscamos o registro de funcionário ligado a esse usuário logado
-        # Se não houver um funcionário vinculado ao User, ele retorna 404
         funcionario = get_object_or_404(Funcionario, user=request.user)
-
-        # Pegamos apenas as informações dele
         minhas_faltas = Falta.objects.filter(funcionario=funcionario).order_by('-data')[:5]
-        # Vamos ordenar primeiro pelo ano mais novo e depois pelo mês mais novo
-        # MUDANÇA AQUI: Adicionamos o filtro status=True
+        
+        # O funcionário vê apenas seus holerites já liberados (status=True)
         meus_holerites = FolhaPagamento.objects.filter(
             funcionario=funcionario, 
-            status=True # <-- Só vê se estiver fechada
+            status=True 
         ).order_by('-ano', '-mes')[:3]
 
         context = {
             'funcionario': funcionario,
             'minhas_faltas': minhas_faltas,
             'meus_holerites': meus_holerites,
-            # Você pode adicionar um aviso de aniversário
-            'e_aniversariante': funcionario.data_nascimento.month == datetime.now().month
+            'e_aniversariante': funcionario.data_nascimento.month == hoje.month
         }
         return render(request, 'dashboard.html', context)
-        
+    
 # --- FUNCIONÁRIOS ---
 @login_required
 def funcionarios_view(request):
@@ -454,21 +455,36 @@ def excluir_falta(request, id):
     messages.success(request, "Falta removida com sucesso!")
     return redirect('faltas_list')
 
-@user_passes_test(eh_master, login_url='dashboard')
+@user_passes_test(eh_master, login_url='dashboard_view')
 def editar_falta(request, id):
     falta = get_object_or_404(Falta, id=id)
     
-    # Trava para edição
-    if falta.folha_referencia:
-        messages.warning(request, "Esta falta está vinculada a uma folha e não pode ser editada.")
+    # Trava de segurança para não editar se a folha já existir
+    if FolhaPagamento.objects.filter(funcionario=falta.funcionario, mes=falta.mes_referencia, ano=falta.ano_referencia).exists():
+        messages.warning(request, "Não é possível editar: este período já possui folha de pagamento.")
         return redirect('faltas_list')
 
     if request.method == 'POST':
-        # ... lógica de captura dos campos (igual ao cadastrar) ...
+        # Lógica de salvar (POST)...
+        pass
+
+    context = {
+        'falta': falta,
+        'funcionarios': Funcionario.objects.all(), # Para o select de funcionários
+    }
+    return render(request, 'core/falta/form.html', context)
+    if request.method == 'POST':
+        # ... sua lógica de salvamento aqui ...
         falta.data = request.POST.get('data')
+        falta.mes_referencia = request.POST.get('mes')
+        falta.ano_referencia = request.POST.get('ano')
         falta.valor_desconto = request.POST.get('valor_desconto').replace(',', '.')
-        # ... outros campos ...
+        # Lembre-se de tratar o atestado se houver novo upload
+        if request.FILES.get('atestado'):
+            falta.atestado = request.FILES.get('atestado')
+            
         falta.save()
+        messages.success(request, "Falta editada com sucesso!")
         return redirect('faltas_list')
     
     context = {

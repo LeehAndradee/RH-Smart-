@@ -8,9 +8,10 @@
                 <a href="{% url 'folha_fechar' folha.id %}" class="btn btn-success shadow-sm">
                     <i class="fas fa-check-circle me-1"></i> Fechar Folha
                 </a>
-                <button class="btn btn-secondary ms-2" disabled title="Feche a folha para emitir o holerite">
-                    <i class="fas fa-lock me-1"></i> Holerite Bloqueado
-                </button>
+                <!-- Botão Recalcular: Útil se você lançou a falta DEPOIS de criar a folha -->
+                <a href="{% url 'folha_update' folha.id %}" class="btn btn-outline-warning ms-2 shadow-sm">
+                    <i class="fas fa-sync-alt me-1"></i> Recalcular Valores
+                </a>
             {% else %}
                 <span class="badge bg-success fs-6 me-2 p-2 px-3 shadow-sm"><i class="fas fa-file-contract me-1"></i> Folha Fechada</span>
                 <a href="{% url 'imprimir_holerite' folha.id %}" target="_blank" class="btn btn-primary shadow-sm">
@@ -27,7 +28,6 @@
             <div class="card p-4 mb-3 shadow-sm border-0 h-100">
                 <h5 class="border-bottom pb-2 text-muted fw-bold">👤 Informações do Colaborador</h5>
                 <p><strong>Nome:</strong> {{ folha.funcionario.nome }}</p>
-                <p><strong>Departamento:</strong> {{ folha.funcionario.departamento.nome|default:"Não definido" }}</p> <!-- FIX: Departamento adicionado -->
                 <p><strong>Cargo:</strong> {{ folha.funcionario.cargo.nome|default:"Não definido" }}</p>
                 <p><strong>CPF:</strong> {{ folha.funcionario.cpf|default:"Não informado" }}</p>
             </div>
@@ -40,7 +40,6 @@
                 <p><strong>Competência:</strong> {{ folha.mes|stringformat:"02d" }}/{{ folha.ano }}</p>
                 <p><strong>Tipo:</strong> <span class="badge bg-info text-dark">{{ folha.get_tipo_display|default:folha.tipo }}</span></p>
                 
-                <!-- CAMPO DE FALTA ADICIONADO -->
                 <p><strong>Faltas no Período:</strong> 
                     <span class="badge {% if folha.total_faltas > 0 %}bg-danger{% else %}bg-secondary{% endif %}">
                         {{ folha.total_faltas|default:"0" }} ocorrência(s)
@@ -48,27 +47,25 @@
                 </p>
                 
                 <p><strong>Salário Base:</strong> R$ {{ folha.salario_base_Snapshot|floatformat:2 }}</p>
-                <p><strong>Status:</strong> {% if folha.fechada %}<span class="text-success">Fechada</span>{% else %}<span class="text-warning">Em Aberto</span>{% endif %}</p>
+                <p><strong>Status:</strong> {% if folha.fechada %}<span class="text-success fw-bold">Fechada</span>{% else %}<span class="text-warning fw-bold">Em Aberto</span>{% endif %}</p>
             </div>
         </div>
     </div>
 
-    <!-- ... Seções de Férias/Rescisão/13º se mantêm ... -->
-
     <!-- 📋 Demonstrativo de Verbas -->
     <div class="card p-4 mb-3 shadow-sm border-0">
         <h5 class="border-bottom pb-2 text-muted fw-bold">📋 Demonstrativo de Verbas</h5>
-        <table class="table table-striped table-hover mt-3">
+        <table class="table table-hover mt-3">
             <thead class="table-light">
                 <tr>
-                    <th>Evento</th>
-                    <th>Tipo</th>
+                    <th>Evento / Descrição</th>
+                    <th>Classificação</th>
                     <th class="text-end">Vencimentos (R$)</th>
                     <th class="text-end">Descontos (R$)</th>
                 </tr>
             </thead>
             <tbody>
-                <!-- Salário Principal -->
+                <!-- 1. Salário Principal -->
                 <tr>
                     <td>Salário Base (30 dias)</td>
                     <td>Provento</td>
@@ -76,13 +73,20 @@
                     <td class="text-end">-</td>
                 </tr>
 
-                <!-- Itens da Folha (Eventos Extras e Faltas) -->
+                <!-- 2. Faltas (Destaque Automático) -->
+                {% if folha.total_faltas > 0 %}
+                <tr class="table-danger">
+                    <td><strong>Faltas Injustificadas ({{ folha.total_faltas }} dia(s))</strong></td>
+                    <td>Desconto Automático</td>
+                    <td class="text-end">-</td>
+                    <td class="text-end text-danger fw-bold">R$ {{ folha.valor_total_faltas|floatformat:2 }}</td>
+                </tr>
+                {% endif %}
+
+                <!-- 3. Itens Dinâmicos (Eventos e Adicionais) -->
                 {% for item in folha.itens.all %}
-                <tr {% if "Falta" in item.evento.nome %}class="table-danger-light"{% endif %}>
-                    <td>
-                        {{ item.evento.nome }}
-                        {% if item.observacao %}<br><small class="text-muted">{{ item.observacao }}</small>{% endif %}
-                    </td>
+                <tr>
+                    <td>{{ item.evento.nome }}</td>
                     <td>{{ item.evento.get_tipo_display|default:item.evento.tipo }}</td>
                     {% if item.evento.tipo == 'P' or item.evento.tipo == 'PROVENTO' %}
                         <td class="text-end text-success">{{ item.valor|floatformat:2 }}</td>
@@ -93,33 +97,18 @@
                     {% endif %}
                 </tr>
                 {% endfor %}
-                <!-- Linha específica para Faltas -->
-                {% if folha.total_faltas > 0 %}
-                <tr class="table-danger">
-                    <td>Faltas Injustificadas ({{ folha.total_faltas }} dia(s))</td>
-                    {% if "/imprimir/" in request.path %} <!-- Se for na impressão -->
-                        <td class="text-right">-</td>
-                        <td class="text-right">-</td>
-                        <td class="text-right">{{ folha.valor_total_faltas|floatformat:2 }}</td>
-                    {% else %} <!-- Se for na tela de detalhes -->
-                        <td>Desconto</td>
-                        <td class="text-end">-</td>
-                        <td class="text-end text-danger">{{ folha.valor_total_faltas|floatformat:2 }}</td>
-                    {% endif %}
-                </tr>
-                {% endif %}
 
-                <!-- Impostos -->
+                <!-- 4. Impostos Legais -->
                 <tr>
                     <td>INSS</td>
-                    <td>Desconto</td>
+                    <td>Imposto Retido</td>
                     <td class="text-end">-</td>
                     <td class="text-end text-danger">{{ folha.inss|floatformat:2 }}</td>
                 </tr>
                 {% if folha.irrf > 0 %}
                 <tr>
                     <td>IRRF</td>
-                    <td>Desconto</td>
+                    <td>Imposto Retido</td>
                     <td class="text-end">-</td>
                     <td class="text-end text-danger">{{ folha.irrf|floatformat:2 }}</td>
                 </tr>
@@ -127,7 +116,7 @@
             </tbody>
             <tfoot class="table-group-divider fw-bold fs-5">
                 <tr>
-                    <td colspan="2" class="text-end">Totais:</td>
+                    <td colspan="2" class="text-end">Totais do Período:</td>
                     <td class="text-end text-success">R$ {{ folha.total_proventos|floatformat:2 }}</td>
                     <td class="text-end text-danger">R$ {{ folha.total_descontos|floatformat:2 }}</td>
                 </tr>
@@ -135,11 +124,12 @@
         </table>
     </div>
 
+    <!-- 💰 Resumo Financeiro Final -->
     <div class="card p-4 mb-3 shadow-sm bg-light border-0">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <p class="mb-1 text-muted fw-bold">FGTS (Depósito do Mês): R$ {{ folha.fgts|floatformat:2 }}</p>
-                <small class="text-muted">* O FGTS é uma obrigação da empresa e não é descontado do colaborador.</small>
+                <p class="mb-1 text-muted fw-bold">FGTS (Encargo Empresa): R$ {{ folha.fgts|floatformat:2 }}</p>
+                <small class="text-muted italic">* O FGTS não é descontado do salário líquido do colaborador.</small>
             </div>
             <div class="col-md-4 text-end">
                 <h6 class="text-muted mb-0">VALOR LÍQUIDO A RECEBER:</h6>
