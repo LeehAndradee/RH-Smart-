@@ -4,85 +4,94 @@
     <meta charset="UTF-8">
     <title>Holerite - {{ folha.funcionario.nome }}</title>
     <style>
-        @media print { .no-print { display: none; } }
+        @page { 
+            size: A4; 
+            margin: 10mm; 
+        }
         
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; color: #333; }
-        .holerite-container { width: 190mm; margin: auto; border: 1px solid #ccc; padding: 20px; background: #fff; }
-        
-        /* Cabeçalho Moderno */
-        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #444; padding-bottom: 10px; margin-bottom: 20px; }
-        .titulo { font-size: 18px; font-weight: bold; text-transform: uppercase; color: #000; }
-        
-        /* Grade de Dados do Funcionário */
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; background: #f9f9f9; padding: 15px; border-radius: 5px; }
-        .info-item { display: flex; flex-direction: column; }
-        .label { font-size: 10px; color: #777; text-transform: uppercase; font-weight: bold; }
-        .value { font-size: 12px; font-weight: 600; }
+        body { 
+            font-family: Arial, Helvetica, sans-serif; 
+            font-size: 10px; 
+            color: #000;
+            background-color: #fff;
+            margin: 0;
+            padding: 0;
+        }
 
-        /* Tabela de Verbas */
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th { background: #444; color: #fff; text-align: left; padding: 8px; text-transform: uppercase; font-size: 10px; }
-        td { padding: 8px; border-bottom: 1px solid #eee; }
+        .holerite-container { 
+            width: 100%; 
+            border: 1px solid #000; 
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+        td { vertical-align: top; padding: 3px; border: 1px solid #000; }
+        
+        .no-border td { border: none; }
+        .label { font-size: 8px; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 2px; }
         .text-right { text-align: right; }
-        
-        /* Totais e Rodapé */
-        .footer-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-        .bases-caixa { border: 1px solid #ddd; padding: 10px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .liquido-caixa { background: #444; color: #fff; padding: 20px; text-align: center; border-radius: 5px; }
-        .liquido-label { font-size: 10px; text-transform: uppercase; }
-        .liquido-valor { font-size: 20px; font-weight: bold; }
+        .text-center { text-align: center; }
+        .bg-gray { background-color: #f2f2f2; }
 
-        .assinatura { margin-top: 50px; text-align: center; border-top: 1px solid #333; width: 300px; margin-left: auto; margin-right: auto; padding-top: 5px; }
+        .tabela-verbas td { border-top: none; border-bottom: none; }
+        .tabela-verbas th { border: 1px solid #000; background: #f2f2f2; padding: 5px; text-align: left; }
+        .linha-total td { border-top: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; }
+
+        .liquido-box {
+            background-color: #000;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+        .liquido-valor { font-size: 16px; font-weight: bold; }
+
+        .assinatura-area { margin-top: 30px; }
+        .linha-assinatura { border-top: 1px solid #000; width: 250px; margin: 30px auto 5px auto; text-align: center; }
     </style>
 </head>
 <body>
 
 <div class="holerite-container">
-    <div class="header">
-        <div>
-            <div class="titulo">Demonstrativo de Pagamento</div>
-            <span>Referente a: <strong>{{ folha.mes }}/{{ folha.ano }}</strong></span>
-        </div>
-        <div class="text-right">
-            <span>Tipo: {{ folha.tipo }}</span>
-        </div>
-    </div>
-
-    <div class="info-grid">
-        <div class="info-item">
-            <span class="label">Colaborador</span>
-            <span class="value">{{ folha.funcionario.nome }}</span>
-        </div>
-        <div class="info-item">
-            <span class="label">CPF</span>
-            <span class="value">{{ folha.funcionario.cpf|default:"---" }}</span>
-        </div>
-        <div class="info-item">
-            <span class="label">Cargo/Função</span>
-            <span class="value">Desenvolvedor</span> </div>
-        <div class="info-item">
-            <span class="label">Telefone</span>
-            <span class="value">{{ folha.funcionario.telefone|default:"---" }}</span>
-        </div>
-        <div class="info-item" style="grid-column: span 2;">
-            <span class="label">Endereço</span>
-            <span class="value">{{ folha.funcionario.endereco|default:"Não cadastrado" }}</span>
-        </div>
-    </div>
+    <table class="no-border">
+        <tr>
+            <td style="width: 60%;">
+                <strong style="font-size: 14px;">RH SMART</strong><br>
+                <span>CNPJ: 00.000.000/0001-00</span>
+            </td>
+            <td style="width: 40%; text-align: right;">
+                <strong style="font-size: 12px;">Recibo de Pagamento</strong><br>
+                <span>Referente a: {{ folha.mes|stringformat:"02d" }}/{{ folha.ano }}</span>
+            </td>
+        </tr>
+    </table>
 
     <table>
+        <tr>
+            <td colspan="3"><span class="label">Colaborador</span><strong>{{ folha.funcionario.nome }}</strong></td>
+            <td><span class="label">CPF</span>{{ folha.funcionario.cpf|default:"---" }}</td>
+        </tr>
+        <tr>
+            <td><span class="label">Cargo</span>{{ folha.funcionario.cargo.nome|default:"---" }}</td>
+            <td><span class="label">Departamento</span>{{ folha.funcionario.departamento.nome|default:"---" }}</td>
+            <td><span class="label">Admissão</span>{{ folha.funcionario.data_admissao|date:"d/m/Y"|default:"---" }}</td>
+            <td><span class="label">PIS</span>{{ folha.funcionario.pis|default:"---" }}</td>
+        </tr>
+    </table>
+
+    <table class="tabela-verbas">
         <thead>
             <tr>
-                <th>Descrição do Evento</th>
-                <th class="text-right">Referência</th>
-                <th class="text-right">Vencimentos</th>
-                <th class="text-right">Descontos</th>
+                <th style="width: 40%;">Descrição</th>
+                <th class="text-right" style="width: 20%;">Referência</th>
+                <th class="text-right" style="width: 20%;">Vencimentos</th>
+                <th class="text-right" style="width: 20%;">Descontos</th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td>Salário Base</td>
-                <td class="text-right">30 Dias</td>
+                <td class="text-right">30d</td>
                 <td class="text-right">{{ folha.salario_base_Snapshot|floatformat:2 }}</td>
                 <td class="text-right">-</td>
             </tr>
@@ -90,7 +99,7 @@
             <tr>
                 <td>{{ item.evento.nome }}</td>
                 <td class="text-right">-</td>
-                {% if item.evento.tipo == 'PROVENTO' %}
+                {% if item.evento.tipo == 'P' or item.evento.tipo == 'PROVENTO' %}
                     <td class="text-right">{{ item.valor|floatformat:2 }}</td>
                     <td class="text-right">-</td>
                 {% else %}
@@ -113,39 +122,56 @@
                 <td class="text-right">{{ folha.irrf|floatformat:2 }}</td>
             </tr>
             {% endif %}
+            
+            <!-- AQUI ESTÁ O AJUSTE: Removida a altura da TR e usado preenchimento vazio -->
+            <tr>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+            </tr>
+
+            <tr class="linha-total bg-gray">
+                <td colspan="2" class="text-right">TOTAIS:</td>
+                <td class="text-right">R$ {{ folha.salario_bruto|floatformat:2 }}</td>
+                <td class="text-right">R$ {{ folha.total_descontos|floatformat:2 }}</td>
+            </tr>
         </tbody>
     </table>
 
-    <div class="footer-grid">
-        <div class="bases-caixa">
-            <div class="info-item">
-                <span class="label">Salário Base</span>
-                <span class="value">R$ {{ folha.salario_base_Snapshot|floatformat:2 }}</span>
-            </div>
-            <div class="info-item">
-                <span class="label">Base Cálc. FGTS</span>
-                <span class="value">R$ {{ folha.salario_bruto|floatformat:2 }}</span>
-            </div>
-            <div class="info-item">
-                <span class="label">FGTS do Mês</span>
-                <span class="value">R$ {{ folha.fgts|floatformat:2 }}</span>
-            </div>
-        </div>
-        <div class="liquido-caixa">
-            <div class="liquido-label">Valor Líquido</div>
-            <div class="liquido-valor">R$ {{ folha.salario_liquido|floatformat:2 }}</div>
-        </div>
-    </div>
+    <table class="no-border">
+        <tr>
+            <td style="width: 70%; padding: 0;">
+                <table style="margin: 0;">
+                    <tr>
+                        <td><span class="label">Salário Base</span>R$ {{ folha.salario_base_Snapshot|floatformat:2 }}</td>
+                        <td><span class="label">Base Cálc. FGTS</span>R$ {{ folha.salario_bruto|floatformat:2 }}</td>
+                        <td><span class="label">FGTS do Mês</span>R$ {{ folha.fgts|floatformat:2 }}</td>
+                    </tr>
+                    <tr>
+                        <td><span class="label">Base Cálc. INSS</span>R$ {{ folha.salario_bruto|floatformat:2 }}</td>
+                        <td><span class="label">Base Cálc. IRRF</span>R$ {{ folha.salario_bruto|floatformat:2 }}</td>
+                        <td><span class="label">Faixa IRRF</span>-</td>
+                    </tr>
+                </table>
+            </td>
+            <td style="width: 30%; padding: 0;">
+                <div class="liquido-box">
+                    <span style="font-size: 8px; text-transform: uppercase;">Valor Líquido</span><br>
+                    <span class="liquido-valor">R$ {{ folha.salario_liquido|floatformat:2 }}</span>
+                </div>
+            </td>
+        </tr>
+    </table>
 
-    <div class="assinatura">
-        {{ folha.funcionario.nome }}<br>
-        <small>Data: ____/____/_______</small>
+    <div class="assinatura-area">
+        <div class="linha-assinatura"></div>
+        <div class="text-center">
+            <strong>{{ folha.funcionario.nome }}</strong><br>
+            <span style="font-size: 8px;">Assinatura do Colaborador</span>
+        </div>
     </div>
 </div>
-
-<script>
-    window.onload = function() { window.print(); }
-</script>
 
 </body>
 </html>

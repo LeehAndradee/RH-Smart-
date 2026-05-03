@@ -2,22 +2,88 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2>Registro de Faltas</h2>
-    <a href="{% url 'falta_create' %}" class="btn btn-primary mb-3">Lançar Falta</a>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="fas fa-clipboard-list me-2"></i> Registro de Faltas</h2>
+        <a href="{% url 'falta_create' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Lançar Falta</a>
+    </div>
     
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Funcionário</th>
-                <th>Data</th>
-                <th>Motivo</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td colspan="3" class="text-center">Nenhuma falta registrada.</td>
-            </tr>
-        </tbody>
-    </table>
+    <!-- Exibição de Mensagens (Sucesso/Erro) -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-striped table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Funcionário</th>
+                        <th>Data da Falta</th>
+                        <th>Folha (Mês/Ano)</th>
+                        <th>Desconto</th>
+                        <th>Status</th>
+                        <th>Atestado</th>
+                        <th class="text-center">Ações</th> <!-- Nova Coluna -->
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for falta in faltas %}
+                    <tr>
+                        <td class="align-middle">{{ falta.funcionario.nome }}</td>
+                        <td class="align-middle">{{ falta.data|date:"d/m/Y" }}</td>
+                        <td class="align-middle">{{ falta.mes_referencia|stringformat:"02d" }}/{{ falta.ano_referencia }}</td>
+                        <td class="align-middle">R$ {{ falta.valor_desconto|floatformat:2 }}</td>
+                        <td class="align-middle">
+                            {% if falta.justificada %}
+                                <span class="badge bg-success">Abonada</span>
+                            {% else %}
+                                <span class="badge bg-danger">Descontar</span>
+                            {% endif %}
+                        </td>
+                        <td class="align-middle text-center">
+                            {% if falta.atestado %}
+                                <a href="{{ falta.atestado.url }}" target="_blank" class="btn btn-sm btn-outline-info" title="Ver Documento">
+                                    <i class="fas fa-file-pdf"></i>
+                                </a>
+                            {% else %}
+                                <span class="text-muted small">---</span>
+                            {% endif %}
+                        </td>
+                        <td class="align-middle text-center">
+                            {% if not falta.folha_referencia %}
+                                <!-- Botões ativos se NÃO houver folha vinculada -->
+                                <a href="{% url 'falta_edit' falta.id %}" class="btn btn-sm btn-warning" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'falta_delete' falta.id %}" 
+                                   class="btn btn-sm btn-danger" 
+                                   title="Excluir"
+                                   onclick="return confirm('Deseja realmente excluir esta falta?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            {% else %}
+                                <!-- Ícone de trava se houver folha vinculada -->
+                                <span class="badge bg-secondary" title="Falta vinculada a um holerite">
+                                    <i class="fas fa-lock"></i> Bloqueado
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">
+                            Nenhuma falta registrada até o momento.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 {% endblock %}

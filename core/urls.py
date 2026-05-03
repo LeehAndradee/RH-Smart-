@@ -1,6 +1,9 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+from django.conf import settings
+from django.conf.urls.static import static
+from django.urls import path, include
 
 urlpatterns = [
     # --- DEPARTAMENTOS ---
@@ -37,6 +40,8 @@ urlpatterns = [
     path('eventos/excluir/<int:id>/', views.evento_delete, name='evento_delete'),  
     path('faltas/', views.faltas_view, name='faltas_list'),
     path('faltas/nova/', views.cadastrar_falta, name='falta_create'),
+    path('faltas/editar/<int:id>/', views.editar_falta, name='falta_edit'),
+    path('faltas/excluir/<int:id>/', views.excluir_falta, name='falta_delete'),
 
     path('folha/<int:folha_id>/imprimir/', views.imprimir_holerite, name='imprimir_holerite'),
     path('login/', auth_views.LoginView.as_view(), name='login'),
@@ -70,3 +75,6 @@ urlpatterns = [
     # ROTA DE LOGOUT
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

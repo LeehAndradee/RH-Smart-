@@ -148,3 +148,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'
+
+# Caminho na URL (ex: http://127.0.0.1:8000/media/...)
+MEDIA_URL = '/media/'
+
+# Caminho real no seu computador onde os arquivos ficam guardados
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

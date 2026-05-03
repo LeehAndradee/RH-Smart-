@@ -3,21 +3,22 @@ from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
-from .models import Funcionario, Cargo, Departamento, FolhaPagamento, Evento, Falta
+from .models import Funcionario, Cargo, Departamento, FolhaPagamento, Evento, Falta, ItemFolha
 from django.contrib.auth.models import User
-from .models import Funcionario, Evento, FolhaPagamento, ItemFolha 
 from django.contrib import messages
-from django.shortcuts import render, get_object_or_404
 from django.db.models import Count, Sum, Avg
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.decorators import user_passes_test
-from django.contrib.auth.models import User
 from django.core.mail import send_mail 
 from django.conf import settings
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.urls import reverse
+from django.http import HttpResponse
+from django.template.loader import get_template
+from xhtml2pdf import pisa
+from io import BytesIO
 
 def eh_master(user):
     # Checa se o usuário está logado e se o perfil dele é MASTER
@@ -25,8 +26,6 @@ def eh_master(user):
 
 
 # --- DASHBOARD ---
-# No core/views.py, dentro da dashboard_view:
-
 @login_required
 def dashboard_view(request):
     # 1. Identificamos o perfil do usuário
@@ -404,26 +403,80 @@ def faltas_view(request):
 @user_passes_test(eh_master, login_url='dashboard_view')
 def cadastrar_falta(request):
     if request.method == 'POST':
-        # Aqui pegamos os dados que vêm do formulário (o 'name' de cada input)
         funcionario_id = request.POST.get('funcionario')
         data = request.POST.get('data')
         motivo = request.POST.get('motivo')
-        atestado = request.FILES.get('atestado') # Arquivos usamos request.FILES
+        atestado = request.FILES.get('atestado')
         justificada = request.POST.get('justificada') == 'on'
+        
+        # NOVOS CAMPOS QUE ESTAVAM FALTANDO NA VIEW:
+        mes_referencia = request.POST.get('mes_referencia')
+        ano_referencia = request.POST.get('ano_referencia')
+        valor_desconto = request.POST.get('valor_desconto')
 
-        # Criamos o registro no banco
-        funcionario = Funcionario.objects.get(id=funcionario_id)
+        funcionario = get_object_or_404(Funcionario, id=funcionario_id)
+
+        # Atualizamos o .create() para incluir as novas variáveis
         Falta.objects.create(
             funcionario=funcionario,
             data=data,
             motivo=motivo,
             atestado=atestado,
-            justificada=justificada
+            justificada=justificada,
+            mes_referencia=int(mes_referencia) if mes_referencia else 0,
+            ano_referencia=int(ano_referencia) if ano_referencia else 0,
+            valor_desconto=valor_desconto.replace(',', '.') if valor_desconto else 0.00
         )
+
+        return redirect('faltas_list')
+
+    context = {
+        'funcionarios': Funcionario.objects.all().order_by('nome'),
+    }
+    return render(request, 'core/falta/form.html', context)
+
+@user_passes_test(eh_master, login_url='dashboard')
+def excluir_falta(request, id):
+    falta = get_object_or_404(Falta, id=id)
+    
+    # 🔍 Verificamos se já existe uma folha criada para este funcionário no mesmo mês/ano da falta
+    folha_existe = FolhaPagamento.objects.filter(
+        funcionario=falta.funcionario, 
+        mes=falta.mes_referencia, 
+        ano=falta.ano_referencia
+    ).exists()
+
+    if folha_existe:
+        messages.error(request, "Não é possível excluir! Já existe uma folha de pagamento para este período.")
         return redirect('faltas_list')
     
-    funcionarios = Funcionario.objects.all().order_by('nome')
-    return render(request, 'core/falta/form.html', {'funcionarios': funcionarios})
+    falta.delete()
+    messages.success(request, "Falta removida com sucesso!")
+    return redirect('faltas_list')
+
+@user_passes_test(eh_master, login_url='dashboard')
+def editar_falta(request, id):
+    falta = get_object_or_404(Falta, id=id)
+    
+    # Trava para edição
+    if falta.folha_referencia:
+        messages.warning(request, "Esta falta está vinculada a uma folha e não pode ser editada.")
+        return redirect('faltas_list')
+
+    if request.method == 'POST':
+        # ... lógica de captura dos campos (igual ao cadastrar) ...
+        falta.data = request.POST.get('data')
+        falta.valor_desconto = request.POST.get('valor_desconto').replace(',', '.')
+        # ... outros campos ...
+        falta.save()
+        return redirect('faltas_list')
+    
+    context = {
+        'falta': falta,
+        'funcionarios': Funcionario.objects.all()
+    }
+    return render(request, 'core/falta/form.html', context)
+
 
 # --- FOLHA DE PAGAMENTO ---
 @login_required
@@ -474,7 +527,7 @@ def folha_create(request):
 
         nova_folha.save()
 
-        # ✅ Eventos extras
+       # ✅ 2. Salvar Eventos Extras (os que você preenche manualmente na tela)
         eventos_ids = request.POST.getlist('evento_id[]')
         eventos_valores = request.POST.getlist('evento_valor[]')
 
@@ -484,6 +537,31 @@ def folha_create(request):
                     folha=nova_folha,
                     evento_id=eid,
                     valor=valor.replace(',', '.')
+                )
+
+        # ✅ 3. PROCESSAR FALTAS AUTOMATICAMENTE
+        # Corrigido: usando 'nova_folha' e não 'folha'
+        faltas_do_mes = Falta.objects.filter(
+            funcionario=nova_folha.funcionario,
+            mes_referencia=nova_folha.mes,
+            ano_referencia=nova_folha.ano,
+            justificada=False
+        )
+
+        total_desconto_faltas = sum(falta.valor_desconto for falta in faltas_do_mes)
+
+        # ✅ 4. Transformar o total de faltas em um Item de Folha
+        if total_desconto_faltas > 0:
+            # Buscamos o evento 'Falta' que você cadastrou no banco
+            # Certifique-se de que o nome no banco seja exatamente este ou use o ID fixo
+            evento_falta = Evento.objects.filter(nome__icontains="Falta", tipo='DESCONTO').first()
+            
+            if evento_falta:
+                ItemFolha.objects.create(
+                    folha=nova_folha,
+                    evento=evento_falta,
+                    valor=total_desconto_faltas,
+                    observacao=f"Desconto de {faltas_do_mes.count()} faltas injustificadas."
                 )
 
         # ✅ Recalcular com tudo aplicado
@@ -596,7 +674,26 @@ def departamento_delete(request, id):
 @user_passes_test(eh_master, login_url='dashboard_view')
 def imprimir_holerite(request, folha_id):
     folha = get_object_or_404(FolhaPagamento, id=folha_id)
-    return render(request, 'core/folha/folha_impressao.html', {'folha': folha})
+    
+    # 1. Carrega o template HTML que você já criou
+    template = get_template('core/folha/folha_impressao.html')
+    html = template.render({'folha': folha})
+    
+    # 2. Cria um buffer na memória para o PDF
+    result = BytesIO()
+    
+    # 3. Transforma o HTML em PDF
+    pdf = pisa.pisaDocument(BytesIO(html.encode("UTF-8")), result)
+    
+    # 4. Se não houver erro, prepara a resposta para o navegador
+    if not pdf.err:
+        response = HttpResponse(result.getvalue(), content_type='application/pdf')
+        
+        # O segredo da "tela preta" é o 'inline' aqui:
+        response['Content-Disposition'] = f'inline; filename="holerite_{folha.funcionario.nome}.pdf"'
+        return response
+    
+    return HttpResponse("Erro ao gerar PDF", status=400)
 
 
 # --- AUTENTICAÇÃO DE PRIMEIRO ACESSO ---

@@ -4,6 +4,10 @@ from django.contrib.auth.models import User
 from decimal import Decimal
 from datetime import date
 import re
+from django.db import models
+from django.core.exceptions import ValidationError
+from decimal import Decimal
+
 
 # --- VALIDAÇÕES ---
 def validar_cpf(value):
@@ -117,15 +121,17 @@ class Evento(models.Model):
 
 class Falta(models.Model):
     funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE)
-    data = models.DateField()
-    justificada = models.BooleanField(default=False)
-    documento = models.FileField(upload_to='justificativas/', null=True, blank=True)
-    observacao = models.TextField(blank=True)
+    data = models.DateField(verbose_name="Data da Falta") # Pode manter para registro
     
+    # NOVOS CAMPOS PARA O RH PREENCHER MANUALMENTE
+    mes_referencia = models.IntegerField(verbose_name="Mês da Folha (Ex: 4)")
+    ano_referencia = models.IntegerField(verbose_name="Ano da Folha (Ex: 2026)")
+    valor_desconto = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    
+    justificada = models.BooleanField(default=False) # Se for True, não desconta nada
+    motivo = models.TextField(blank=True)
+    atestado = models.FileField(upload_to='justificativas/', null=True, blank=True)
 
-    def __str__(self):
-        status = "Justificada" if self.justificada else "Não Justificada"
-        return f"Falta {self.funcionario.nome} - {self.data} ({status})"
 
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -145,18 +151,26 @@ class FolhaPagamento(models.Model):
         (0, 'Parcela Única'),
     ]
 
+    @property
+    def valor_total_faltas(self):
+        """Retorna o valor total em R$ das faltas do período."""
+        faltas_count = self.total_faltas
+        if faltas_count > 0:
+            valor_dia = self.salario_base_Snapshot / Decimal('30')
+            return (valor_dia * Decimal(str(faltas_count)))
+        return Decimal('0.00')
+
     # Dados de Identificação
-    funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE)
+    funcionario = models.ForeignKey('Funcionario', on_delete=models.CASCADE)
     mes = models.IntegerField()
     ano = models.IntegerField()
     tipo = models.CharField(max_length=10, choices=TIPOS, default='MENSAL')
     
-    # Campos Condicionais (Novas Funcionalidades)
+    # Campos Condicionais
     dias_gozo_ferias = models.IntegerField(null=True, blank=True, default=30)
     data_rescisao = models.DateField(null=True, blank=True)
     parcela_13o = models.IntegerField(choices=PARCELAS_13O, null=True, blank=True)
     motivo_rescisao = models.CharField(max_length=50, null=True, blank=True)
-    status = models.BooleanField(default=False, verbose_name="Folha Fechada/Liberada")
     
     # Campos de Snapshot e Resultados
     salario_base_Snapshot = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -166,8 +180,9 @@ class FolhaPagamento(models.Model):
     total_proventos = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_descontos = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     salario_liquido = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    
-    salario_bruto = models.DecimalField(max_digits=10, decimal_places=2)
+    salario_bruto = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    # ⚠️ CAMPO RESTAURADO PARA EVITAR O ERRO DE INTEGRITY ⚠️
+    status = models.BooleanField(default=False, verbose_name="Folha Fechada/Liberada")
 
     valor_ferias_bruto = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     terco_constitucional = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -183,21 +198,28 @@ class FolhaPagamento(models.Model):
         if self.fechada and self.pk:
             raise ValidationError("Esta folha está fechada e não pode ser editada.")
 
+    @property
+    def total_faltas(self):
+        """Retorna a contagem de faltas não justificadas para o período da folha."""
+        from .models import Falta
+        return Falta.objects.filter(
+            funcionario=self.funcionario,
+            mes_referencia=self.mes,
+            ano_referencia=self.ano,
+            justificada=False
+        ).count()
+
     def calcular_tudo(self):
-        # 1. Pega salário base atual
         self.salario_base_Snapshot = self.funcionario.salario_base
         bruto = Decimal('0')
-        descontos_legais_ativos = True # Define se calcula INSS/IRRF
+        descontos_legais_ativos = True
 
-        # 2. Lógica por Tipo de Folha
+        # 1. Lógica por Tipo de Folha
         if self.tipo == 'MENSAL':
             bruto = self.salario_base_Snapshot
 
         elif self.tipo == 'FERIAS':
             dias = Decimal(str(self.dias_gozo_ferias or 30))
-            valor_ferias = (self.salario_base_Snapshot / 30) * dias
-            bruto = valor_ferias + (valor_ferias / 3)
-   
             self.valor_ferias_bruto = (self.salario_base_Snapshot / 30) * dias
             self.terco_constitucional = self.valor_ferias_bruto / 3
             bruto = self.valor_ferias_bruto + self.terco_constitucional
@@ -206,52 +228,38 @@ class FolhaPagamento(models.Model):
             if self.parcela_13o == 1:
                 bruto = self.salario_base_Snapshot / 2
                 descontos_legais_ativos = False
-
-            elif self.parcela_13o == 2:
-                bruto = self.salario_base_Snapshot  # usa o total
-
             else:
                 bruto = self.salario_base_Snapshot
 
-            if self.tipo == 'DECIMO' and self.parcela_13o == 2:
-                self.salario_liquido -= (self.salario_base_Snapshot / 2)
-
         elif self.tipo == 'RESCISAO' and self.data_rescisao:
             dias_trabalhados = Decimal(str(self.data_rescisao.day))
-            self.saldo_salario_rescisao = (self.salario_base_Snapshot / 30) * dias_trabalhados # <-- Adicione esta linha
+            self.saldo_salario_rescisao = (self.salario_base_Snapshot / 30) * dias_trabalhados
             bruto = self.saldo_salario_rescisao
 
-        # 3. Processa Itens Extras (Eventos/Adicionais)
+        # 2. Processa Itens Extras (Adicionais/Descontos manuais)
         descontos_adicionais = Decimal('0')
-        # Buscamos os itens relacionados (Related Name 'itens')
         if self.pk:
             for item in self.itens.all():
                 if self.tipo == 'DECIMO' and not item.evento.aplica_13:
                     continue
-
                 if item.evento.tipo == 'P':
                     bruto += item.valor
                 else:
                     descontos_adicionais += item.valor
 
-        # 4. Processa Faltas (Apenas para folha Mensal)
+        # 3. Processa Faltas Automáticas (Baseado nos registros de Falta)
         if self.tipo == 'MENSAL':
-            faltas = Falta.objects.filter(
-                funcionario=self.funcionario, 
-                data__month=self.mes, 
-                data__year=self.ano, 
-                justificada=False
-            ).count()
-            if faltas > 0:
+            # FIX: Agora filtrando pelos campos de referência corretos
+            faltas_count = self.total_faltas 
+            if faltas_count > 0:
                 valor_dia = self.salario_base_Snapshot / 30
-                descontos_adicionais += (valor_dia * Decimal(str(faltas)))
+                descontos_adicionais += (valor_dia * Decimal(str(faltas_count)))
 
         self.salario_bruto = bruto
 
-        # 5. Cálculos de Impostos
+        # 4. Cálculos de Impostos
         if descontos_legais_ativos:
             self.inss = self.calc_inss(bruto)
-            # Dedução por dependente: R$ 189,59
             dependentes_valor = Decimal(str(self.funcionario.dependentes)) * Decimal('189.59')
             base_irrf = bruto - self.inss - dependentes_valor
             self.irrf = max(self.calc_irrf(base_irrf), Decimal('0'))
@@ -259,18 +267,14 @@ class FolhaPagamento(models.Model):
             self.inss = Decimal('0')
             self.irrf = Decimal('0')
 
-        if self.tipo == 'DECIMO' and self.parcela_13o == 1:
-            self.fgts = Decimal('0')
-        else:
-            self.fgts = bruto * Decimal('0.08')
+        self.fgts = Decimal('0') if (self.tipo == 'DECIMO' and self.parcela_13o == 1) else (bruto * Decimal('0.08'))
 
-        # 6. Totais Finais
+        # 5. Totais Finais
         self.total_proventos = bruto
         self.total_descontos = self.inss + self.irrf + descontos_adicionais
         self.salario_liquido = self.total_proventos - self.total_descontos
 
-
-        # ✅ AJUSTE DA 2ª PARCELA DO 13º
+        # Ajuste 2ª Parcela 13º
         if self.tipo == 'DECIMO' and self.parcela_13o == 2:
             self.salario_liquido -= (self.salario_base_Snapshot / 2)
 
@@ -285,19 +289,14 @@ class FolhaPagamento(models.Model):
         return (base * Decimal('0.275')) - Decimal('896.00')
 
     def save(self, *args, **kwargs):
-        # 1. Se a folha é nova (ainda não tem ID), buscamos o salário AGORA
         if not self.pk:
             self.salario_base_Snapshot = self.funcionario.salario_base
             self.salario_bruto = self.funcionario.salario_base
         
-        # 2. Salva a primeira vez (O banco agora aceita, pois o salário já está preenchido)
         super().save(*args, **kwargs)
         
-        # 3. Agora que já salvou e tem ID, rodamos o cálculo completo 
-        # (Para processar INSS, IRRF e itens extras que precisam do ID)
         if not self.fechada:
             self.calcular_tudo()
-            # 4. Atualiza os valores finais calculados
             super().save(update_fields=[
                 'salario_base_Snapshot', 'salario_bruto', 'inss', 'irrf', 
                 'fgts', 'total_proventos', 'total_descontos', 'salario_liquido'
@@ -305,5 +304,5 @@ class FolhaPagamento(models.Model):
 
 class ItemFolha(models.Model):
     folha = models.ForeignKey(FolhaPagamento, on_delete=models.CASCADE, related_name='itens')
-    evento = models.ForeignKey(Evento, on_delete=models.CASCADE)
+    evento = models.ForeignKey('Evento', on_delete=models.CASCADE)
     valor = models.DecimalField(max_digits=10, decimal_places=2)
