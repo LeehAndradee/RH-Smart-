@@ -10,26 +10,24 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
+import dj_database_url
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Caminho base do projeto
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# --- SEGURANÇA ---
+# No Railway, você criará uma variável chamada SECRET_KEY. 
+# Se não houver, ele usa essa de fallback para testes locais.
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-df8w0zb!%3olt+6bl0l7%k^gkfk5-n*)(rlb!&t85&p=4c97=h')
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+# No Railway, coloque a variável DEBUG como False.
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-df8w0zb!%3olt+6bl0l7%k^gkfk5-n*)(rlb!&t85&p=4c97=h'
+# '*' permite acesso de qualquer domínio gerado pelo Railway
+ALLOWED_HOSTS = ['*', '127.0.0.1', 'localhost']
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
-
-# Application definition
-
+# --- DEFINIÇÃO DE APLICATIVOS ---
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -37,11 +35,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'core',
+    'core', # Seu app principal
 ]
 
+# --- MIDDLEWARE (WhiteNoise adicionado para arquivos estáticos) ---
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Essencial para o deploy
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -69,88 +69,47 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'rhsmart.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+# --- BANCO DE DADOS (Dinâmico para Railway + Local) ---
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'rhsmart2',
-        'USER': 'postgres',      # Seu usuário do Postgres
-        'PASSWORD': 'Elieusa123!', # Sua senha do Postgres
-        'HOST': '127.0.0.1', # Use o IP em vez de 'localhost' para evitar buscas de DNS do Windows
-        'PORT': '5432',
-    }
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL', 'postgresql://postgres:Elieusa123!@127.0.0.1:5432/rhsmart2'),
+        conn_max_age=600
+    )
 }
 
-# Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
+# --- VALIDAÇÃO DE SENHAS ---
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-
-# Isso faz o e-mail "fingir" que foi enviado e mostrar o texto no seu terminal
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-EMAIL_HOST = 'smtp-mail.outlook.com'  # Servidor do Outlook
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'leticiaa@outlook.com'  # E-MAIL
-EMAIL_HOST_PASSWORD = '123456' # SENHA 
-
-# Faz o e-mail aparecer no terminal do VS Code em vez de enviar de verdade
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-# Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
+# --- INTERNACIONALIZAÇÃO ---
 LANGUAGE_CODE = 'pt-br'
-
 TIME_ZONE = 'America/Sao_Paulo'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
-# Static files (CSS, JavaScript, Images)
+# --- ARQUIVOS ESTÁTICOS (CSS, JS, IMAGES) ---
 STATIC_URL = 'static/'
-
-# Esta linha diz ao Django para procurar na pasta static do seu projeto
-STATICFILES_DIRS = [
-    BASE_DIR / 'core' / 'static',
-]
-
-# Pasta onde os arquivos ficam em produção (bom deixar configurado)
+STATICFILES_DIRS = [BASE_DIR / 'core' / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
+# Armazenamento com compressão para o Railway
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# --- ARQUIVOS DE MÍDIA (Atestados, etc) ---
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Configurações de Autenticação
+# --- CONFIGURAÇÕES DE LOGIN ---
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'
 
-# Caminho na URL (ex: http://127.0.0.1:8000/media/...)
-MEDIA_URL = '/media/'
+# --- E-MAIL (Console para testes) ---
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Caminho real no seu computador onde os arquivos ficam guardados
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Chave padrão para IDs
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
