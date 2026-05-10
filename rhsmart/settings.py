@@ -120,3 +120,9 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Chave padrão para IDs
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Permite que o domínio do Railway envie formulários POST com segurança
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-f66c2.up.railway.app',
+    'https://*.up.railway.app'  # Isso cobre qualquer subdomínio futuro no Railway
+]
