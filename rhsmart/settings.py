@@ -126,3 +126,10 @@ CSRF_TRUSTED_ORIGINS = [
     'https://web-production-f66c2.up.railway.app',
     'https://*.up.railway.app'  # Isso cobre qualquer subdomínio futuro no Railway
 ]
+
+# Informa ao Django que ele está atrás de um proxy HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Configurações extras de segurança recomendadas para produção
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
