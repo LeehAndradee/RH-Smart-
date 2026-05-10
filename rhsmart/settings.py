@@ -69,20 +69,27 @@ TEMPLATES = [
 WSGI_APPLICATION = 'rhsmart.wsgi.application'
 
 
-# 1. Pega a variável do ambiente
+
+# Pega o link do banco
 db_url = os.getenv('DATABASE_URL')
-print(f"DEBUG: DATABASE_URL encontrada: {db_url[:15] if db_url else 'NENHUMA'}")
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=db_url,
-        conn_max_age=600
-    )
-}
-
-# 3. Garante que se o engine for vazio, ele não use o 'dummy'
-if db_url and not DATABASES['default'].get('ENGINE'):
-    DATABASES['default'] = dj_database_url.parse(db_url)
+if db_url:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=db_url,
+            conn_max_age=600
+        )
+    }
+else:
+    # Se chegarmos aqui, a variável DATABASE_URL não existe no Railway
+    # Isso evita o erro de 'dummy' e te mostra o problema real no log
+    print("ERRO: A variável DATABASE_URL não foi encontrada no ambiente!")
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
 
 # --- VALIDAÇÃO DE SENHAS ---
 AUTH_PASSWORD_VALIDATORS = [
