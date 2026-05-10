@@ -25,7 +25,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-df8w0zb!%3olt+6bl0l7%k^gkf
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 # '*' permite acesso de qualquer domínio gerado pelo Railway
-ALLOWED_HOSTS = ['rh-smart-production.up.railway.app']
+ALLOWED_HOSTS = '*'
 # --- DEFINIÇÃO DE APLICATIVOS ---
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -69,15 +69,22 @@ TEMPLATES = [
 WSGI_APPLICATION = 'rhsmart.wsgi.application'
 
 
-LINK_RAILWAY = 'COLE_AQUI_O_LINK_DO_RAILWAY'
+# 1. Pega a variável do ambiente
+db_url = os.getenv('DATABASE_URL')
 
+# 2. Configura o dicionário de banco
 DATABASES = {
     'default': dj_database_url.config(
-        default=LINK_RAILWAY,
+        default=db_url,
         conn_max_age=600
+    ) if db_url else dj_database_url.config(
+        default='sqlite:///db.sqlite3' # Fallback para não travar o build
     )
 }
 
+# 3. Garante que se o engine for vazio, ele não use o 'dummy'
+if db_url and not DATABASES['default'].get('ENGINE'):
+    DATABASES['default'] = dj_database_url.parse(db_url)
 
 # --- VALIDAÇÃO DE SENHAS ---
 AUTH_PASSWORD_VALIDATORS = [
