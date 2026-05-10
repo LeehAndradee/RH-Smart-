@@ -4,5 +4,4 @@ whitenoise
 dj-database-url
 psycopg2-binary
 pillow
-xhtml2pdf
-reportlab
+xhtml2pdf==0.2.11
