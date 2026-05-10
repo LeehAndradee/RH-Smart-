@@ -71,12 +71,12 @@ WSGI_APPLICATION = 'rhsmart.wsgi.application'
 
 # 1. Pega a variável do ambiente
 db_url = os.getenv('DATABASE_URL')
-
+print(f"DEBUG: DATABASE_URL encontrada: {db_url[:15] if db_url else 'NENHUMA'}")
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL'),
-        conn_max_age=600,
+        default=db_url,
+        conn_max_age=600
     )
 }
 
