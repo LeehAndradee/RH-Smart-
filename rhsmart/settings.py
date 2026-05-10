@@ -68,15 +68,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'rhsmart.wsgi.application'
 
-# 1. Pega o link da nuvem (Railway)
-db_url = os.getenv('DATABASE_URL')
 
-# 2. Configura o banco
+# COLOQUE O LINK QUE VOCÊ COPIOU DENTRO DAS ASPAS ABAIXO
+LINK_MANUAL = 'postgresql://postgres:Elieusa123!@127.0.0.1:5432/rhsmart2'
+
 DATABASES = {
     'default': dj_database_url.config(
-        # Se db_url existir (na nuvem), ele usa. 
-        # Se não (no seu PC), usa o endereço que você mostrou no print.
-        default=db_url or 'postgresql://postgres:Elieusa123!@127.0.0.1:5432/rhsmart2',
+        default=LINK_MANUAL,
         conn_max_age=600
     )
 }
