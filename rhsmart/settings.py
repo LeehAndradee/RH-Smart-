@@ -69,17 +69,18 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'rhsmart.wsgi.application'
 
-# Tenta pegar DATABASE_URL, se não existir tenta RAILWAY_DATABASE_URL, 
-# se nenhum existir, usa o localhost.
+# 1. Tenta pegar o link do Railway (ele pode usar qualquer um desses dois nomes)
+# Se não encontrar nenhum, db_url ficará como None
 db_url = os.getenv('DATABASE_URL', os.getenv('RAILWAY_DATABASE_URL'))
-# --- BANCO DE DADOS (Dinâmico para Railway + Local) ---
+
+# 2. Configura o banco
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL', 'postgresql://postgres:Elieusa123!@127.0.0.1:5432/rhsmart2'),
+        # Se db_url tiver valor, ele usa. Se for None, usa o endereço local.
+        default=db_url or 'postgresql://postgres:Elieusa123!@127.0.0.1:5432/rhsmart2',
         conn_max_age=600
     )
 }
-
 # --- VALIDAÇÃO DE SENHAS ---
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
