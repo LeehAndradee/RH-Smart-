@@ -25,8 +25,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-df8w0zb!%3olt+6bl0l7%k^gkf
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 # '*' permite acesso de qualquer domínio gerado pelo Railway
-ALLOWED_HOSTS = ['*', '127.0.0.1', 'localhost']
-
+ALLOWED_HOSTS = ['rh-smart-production.up.railway.app']
 # --- DEFINIÇÃO DE APLICATIVOS ---
 INSTALLED_APPS = [
     'django.contrib.admin',
