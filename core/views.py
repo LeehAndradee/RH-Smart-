@@ -26,9 +26,12 @@ def eh_master(user):
 
 
 # --- DASHBOARD ---
+@login_required
 def dashboard_view(request):
     perfil = request.user.perfil
     hoje = datetime.now()
+
+    
     
     # --- LÓGICA DE COMPETÊNCIA ANTERIOR ---
     # Se estamos em Maio, a competência alvo é Abril.

@@ -72,13 +72,11 @@ WSGI_APPLICATION = 'rhsmart.wsgi.application'
 # 1. Pega a variável do ambiente
 db_url = os.getenv('DATABASE_URL')
 
-# 2. Configura o dicionário de banco
+
 DATABASES = {
     'default': dj_database_url.config(
-        default=db_url,
-        conn_max_age=600
-    ) if db_url else dj_database_url.config(
-        default='sqlite:///db.sqlite3' # Fallback para não travar o build
+        default=os.getenv('DATABASE_URL'),
+        conn_max_age=600,
     )
 }
 
@@ -114,7 +112,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # --- CONFIGURAÇÕES DE LOGIN ---
 LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/dashboard/'
+LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
 
 # --- E-MAIL (Console para testes) ---
