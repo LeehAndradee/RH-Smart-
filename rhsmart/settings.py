@@ -68,16 +68,24 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'rhsmart.wsgi.application'
 
+import os
+import dj_database_url
 
-# COLOQUE O LINK QUE VOCÊ COPIOU DENTRO DAS ASPAS ABAIXO
-LINK_MANUAL = 'postgresql://postgres:Elieusa123!@127.0.0.1:5432/rhsmart2'
+# Tenta pegar a URL do Railway de duas formas diferentes
+db_from_env = os.getenv('DATABASE_URL')
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=LINK_MANUAL,
-        conn_max_age=600
+        default=db_from_env,
+        conn_max_age=600,
+        conn_health_checks=True,
     )
 }
+
+# Se após o config o motor ainda for o 'dummy', o Django vai avisar no Log
+if not DATABASES.get('default') or DATABASES['default'].get('ENGINE') == 'django.db.backends.dummy':
+    print("ERRO CRÍTICO: DATABASE_URL não encontrada ou mal formatada!")
+    
 # --- VALIDAÇÃO DE SENHAS ---
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
