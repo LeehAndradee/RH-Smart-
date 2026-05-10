@@ -69,6 +69,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'rhsmart.wsgi.application'
 
+# Tenta pegar DATABASE_URL, se não existir tenta RAILWAY_DATABASE_URL, 
+# se nenhum existir, usa o localhost.
+db_url = os.getenv('DATABASE_URL', os.getenv('RAILWAY_DATABASE_URL'))
 # --- BANCO DE DADOS (Dinâmico para Railway + Local) ---
 DATABASES = {
     'default': dj_database_url.config(
