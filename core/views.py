@@ -358,14 +358,12 @@ def evento_create(request):
         tipo = request.POST.get('tipo')
         # Pegando os nomes corretos do formulário
         valor = request.POST.get('valor_fixo') 
-        percentual = request.POST.get('percentual')
 
         Evento.objects.create(
             nome=nome,
             tipo=tipo,
             # Correção: usando as variáveis tratadas
             valor_fixo=valor if valor else None, 
-            percentual=percentual if percentual else None
         )
         return redirect('eventos_list')
     
@@ -379,11 +377,9 @@ def evento_update(request, id):
         evento.nome = request.POST.get('nome')
         evento.tipo = request.POST.get('tipo')
         
-        percentual = request.POST.get('percentual')
         valor_fixo = request.POST.get('valor_fixo')
         
         # Tratamento para evitar erro de string vazia no banco
-        evento.percentual = percentual if percentual else None
         evento.valor_fixo = valor_fixo if valor_fixo else None
         
         evento.save()
