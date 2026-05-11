@@ -491,37 +491,42 @@ def excluir_falta(request, id):
 def editar_falta(request, id):
     falta = get_object_or_404(Falta, id=id)
     
-    # Trava de segurança para não editar se a folha já existir
-    if FolhaPagamento.objects.filter(funcionario=falta.funcionario, mes=falta.mes_referencia, ano=falta.ano_referencia).exists():
+    # Trava de segurança (Mantenha no topo)
+    if FolhaPagamento.objects.filter(
+        funcionario=falta.funcionario, 
+        mes=falta.mes_referencia, 
+        ano=falta.ano_referencia
+    ).exists():
         messages.warning(request, "Não é possível editar: este período já possui folha de pagamento.")
         return redirect('faltas_list')
 
     if request.method == 'POST':
-        # Lógica de salvar (POST)...
-        pass
-
-    context = {
-        'falta': falta,
-        'funcionarios': Funcionario.objects.all(), # Para o select de funcionários
-    }
-    return render(request, 'core/falta/form.html', context)
-    if request.method == 'POST':
-        # ... sua lógica de salvamento aqui ...
+        # OS NOMES ABAIXO DEVEM SER IGUAIS AO 'name=' DO HTML
+        falta.funcionario_id = request.POST.get('funcionario') # No HTML está name="funcionario"
         falta.data = request.POST.get('data')
-        falta.mes_referencia = request.POST.get('mes')
-        falta.ano_referencia = request.POST.get('ano')
-        falta.valor_desconto = request.POST.get('valor_desconto').replace(',', '.')
-        # Lembre-se de tratar o atestado se houver novo upload
+        falta.mes_referencia = request.POST.get('mes_referencia') # Corrigido: era 'mes'
+        falta.ano_referencia = request.POST.get('ano_referencia') # Corrigido: era 'ano'
+        falta.motivo = request.POST.get('motivo')
+        
+        # Tratamento do checkbox (justificada)
+        # Checkbox só envia valor se estiver marcado
+        falta.justificada = 'justificada' in request.POST 
+        
+        # Tratamento do valor decimal
+        valor = request.POST.get('valor_desconto', '0')
+        falta.valor_desconto = valor.replace(',', '.')
+        
         if request.FILES.get('atestado'):
             falta.atestado = request.FILES.get('atestado')
             
         falta.save()
-        messages.success(request, "Falta editada com sucesso!")
+        messages.success(request, "Falta atualizada com sucesso!")
         return redirect('faltas_list')
-    
+
+    # Se for GET, renderiza o formulário
     context = {
         'falta': falta,
-        'funcionarios': Funcionario.objects.all()
+        'funcionarios': Funcionario.objects.all(),
     }
     return render(request, 'core/falta/form.html', context)
 
