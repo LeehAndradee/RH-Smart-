@@ -349,15 +349,15 @@ def departamento_update(request, id):
 
 @user_passes_test(eh_master, login_url='dashboard')
 def departamento_delete(request, id):
-    depto = get_object_or_404(Departamento, id=id)
+    departamento = get_object_or_404(Departamento, id=id)
     
     try:
-        depto.excluir() # Ou .delete(), conforme seu modelo
-        messages.success(request, f"Departamento '{depto.nome}' removido com sucesso.")
+        departamento.delete()
+        messages.success(request, f"Departamento '{departamento.nome}' excluído com sucesso!")
     except ProtectedError:
-        # Aqui capturamos o erro que você viu na tela amarela
-        messages.error(request, f"O departamento '{depto.nome}' não pode ser excluído porque possui funcionários (como o Carlos José ou a Thamires) vinculados a ele.")
-    
+        # Captura o erro caso existam funcionários usando este departamento
+        messages.error(request, f"Não é possível excluir o departamento '{departamento.nome}' porque existem funcionários vinculados a ele.")
+        
     return redirect('departamento_view')
 
 
