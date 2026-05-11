@@ -336,7 +336,7 @@ def departamento_create(request):
             parent_id=parent_id if parent_id else None
         )
         messages.success(request, "Departamento criado com sucesso!")
-        return redirect('departamentos_view') # Ajustado para o plural
+        return redirect('departamento_view') # Ajustado para o plural
     
     departamentos = Departamento.objects.all()
     return render(request, 'core/departamento/form.html', {'departamentos': departamentos})
