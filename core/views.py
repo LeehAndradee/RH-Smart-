@@ -16,6 +16,7 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.urls import reverse
 from django.http import HttpResponse
+from django.db.models import ProtectedError
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 from io import BytesIO
@@ -303,7 +304,15 @@ def cargo_update(request, id):
 
 @user_passes_test(eh_master, login_url='dashboard')
 def cargo_delete(request, id):
-    get_object_or_404(Cargo, id=id).delete()
+    cargo = get_object_or_404(Cargo, id=id)
+    
+    try:
+        cargo.delete()
+        messages.success(request, f"Cargo '{cargo.nome}' excluído com sucesso!")
+    except ProtectedError:
+        # Captura o erro caso existam funcionários usando este cargo
+        messages.error(request, f"Não é possível excluir o cargo '{cargo.nome}' porque existem funcionários vinculados a ele.")
+        
     return redirect('cargos_view')
 
 # --- DEPARTAMENTOS ---
@@ -340,8 +349,16 @@ def departamento_update(request, id):
 
 @user_passes_test(eh_master, login_url='dashboard')
 def departamento_delete(request, id):
-    get_object_or_404(Departamento, id=id).delete()
-    return redirect('departamentos_view')
+    depto = get_object_or_404(Departamento, id=id)
+    
+    try:
+        depto.delete()
+        messages.success(request, f"Departamento '{depto.nome}' excluído com sucesso!")
+    except ProtectedError:
+        # Aqui capturamos o erro de vínculo e avisamos o usuário
+        messages.error(request, f"Erro: Não é possível excluir o departamento '{depto.nome}' porque existem funcionários ou cargos vinculados a ele.")
+        
+    return redirect('departamento_view')
 
 
 # --- EVENTOS ---
