@@ -315,13 +315,15 @@ def cargo_delete(request, id):
         
     return redirect('cargos_view')
 
-# --- DEPARTAMENTOS ---
+
+
+# --- LISTAGEM ---
 @user_passes_test(eh_master, login_url='dashboard_view')
 def departamentos_view(request):
     departamentos = Departamento.objects.all()
     return render(request, 'core/departamento/list.html', {'departamentos': departamentos})
 
-
+# --- CRIAR ---
 @user_passes_test(eh_master, login_url='dashboard')
 def departamento_create(request):
     if request.method == 'POST':
@@ -329,36 +331,50 @@ def departamento_create(request):
         descricao = request.POST.get('descricao')
         parent_id = request.POST.get('parent_id')
 
-        novo_depto = Departamento(
+        Departamento.objects.create(
             nome=nome,
             descricao=descricao,
-            parent_id=parent_id if parent_id else None # O Django aceita parent_id se o campo for 'parent'
+            parent_id=parent_id if parent_id else None
         )
-        novo_depto.save()
-        
-        return redirect('departamento_view') 
+        messages.success(request, "Departamento criado com sucesso!")
+        return redirect('departamentos_view') # Ajustado para o plural
     
     departamentos = Departamento.objects.all()
     return render(request, 'core/departamento/form.html', {'departamentos': departamentos})
 
+# --- EDITAR (Corrigido para salvar os dados) ---
 @user_passes_test(eh_master, login_url='dashboard_view')
 def departamento_update(request, id):
     departamento = get_object_or_404(Departamento, id=id)
-    return render(request, 'core/departamento/form.html', {'departamento': departamento})
+    
+    if request.method == 'POST':
+        departamento.nome = request.POST.get('nome')
+        departamento.descricao = request.POST.get('descricao')
+        parent_id = request.POST.get('parent_id')
+        departamento.parent_id = parent_id if parent_id else None
+        departamento.save()
+        
+        messages.success(request, f"Departamento '{departamento.nome}' atualizado com sucesso!")
+        return redirect('departamentos_view') # Ajustado para o plural
 
+    departamentos = Departamento.objects.exclude(id=id)
+    return render(request, 'core/departamento/form.html', {
+        'departamento': departamento, 
+        'departamentos': departamentos
+    })
 
+# --- EXCLUIR (Padronizado e Seguro) ---
 @user_passes_test(eh_master, login_url='dashboard')
 def departamento_delete(request, id):
-    depto = get_object_or_404(Departamento, id=id)
+    departamento = get_object_or_404(Departamento, id=id)
     try:
-        depto.delete() # ou depto.excluir(), veja qual você usa
-        messages.success(request, "Excluído com sucesso.")
+        departamento.delete()
+        messages.success(request, "Departamento removido com sucesso.")
     except Exception as e: 
-        # Captura QUALQUER erro e mostra o que aconteceu no log
-        print(f"Erro detectado: {e}") 
-        messages.error(request, f"Não foi possível excluir: {depto.nome}. Verifique vínculos.")
+        # Aqui capturamos o ProtectedError e enviamos a mensagem
+        messages.error(request, f"Não foi possível excluir '{departamento.nome}'. Verifique se existem funcionários vinculados.")
     
-    return redirect('departamento_view')
+    return redirect('departamentos_view') # Ajustado para o plural
 
 
 # --- EVENTOS ---
