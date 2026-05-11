@@ -349,15 +349,15 @@ def departamento_update(request, id):
 
 @user_passes_test(eh_master, login_url='dashboard')
 def departamento_delete(request, id):
-    departamento = get_object_or_404(Departamento, id=id)
-    
+    depto = get_object_or_404(Departamento, id=id)
     try:
-        departamento.delete()
-        messages.success(request, f"Departamento '{departamento.nome}' excluído com sucesso!")
-    except ProtectedError:
-        # Captura o erro caso existam funcionários usando este departamento
-        messages.error(request, f"Não é possível excluir o departamento '{departamento.nome}' porque existem funcionários vinculados a ele.")
-        
+        depto.delete() # ou depto.excluir(), veja qual você usa
+        messages.success(request, "Excluído com sucesso.")
+    except Exception as e: 
+        # Captura QUALQUER erro e mostra o que aconteceu no log
+        print(f"Erro detectado: {e}") 
+        messages.error(request, f"Não foi possível excluir: {depto.nome}. Verifique vínculos.")
+    
     return redirect('departamento_view')
 
 
