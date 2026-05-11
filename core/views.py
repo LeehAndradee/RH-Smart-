@@ -353,6 +353,10 @@ def departamento_update(request, id):
         departamento.parent_id = parent_id if parent_id else None
         departamento.save()
         
+        # MENSAGEM DE SUCESSO AO EDITAR
+        messages.success(request, f"Departamento '{departamento.nome}' atualizado com sucesso!")
+        return redirect('departamento_view') # Verifique se o nome na urls.py é este
+    
         messages.success(request, f"Departamento '{departamento.nome}' atualizado com sucesso!")
         return redirect('departamentos_view') # Ajustado para o plural
 
