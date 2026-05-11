@@ -162,33 +162,32 @@ def funcionario_update(request, id):
 
 @user_passes_test(eh_master, login_url='dashboard')
 
+@user_passes_test(eh_master, login_url='dashboard')
 @login_required
 def funcionario_delete(request, id):
-    # 1. Busca o funcionário ou dá erro 404 se não existir
+    # 1. Busca o funcionário
     funcionario = get_object_or_404(Funcionario, id=id)
     
-    # 2. Segurança: Apenas MASTER pode desativar alguém
+    # 2. Segurança: Apenas MASTER pode desativar
     if request.user.perfil.tipo_acesso != 'MASTER':
         messages.error(request, "Você não tem permissão para realizar esta ação.")
         return redirect('dashboard')
 
-    # 3. Só processa a "exclusão" se for um método POST (por segurança)
-    if request.method == 'POST':
-        # DESATIVAÇÃO DO FUNCIONÁRIO
-        funcionario.ativo = False
-        funcionario.save()
+    # 3. Lógica de Desativação (Soft Delete)
+    funcionario.ativo = False
+    funcionario.save()
 
-        # DESATIVAÇÃO DO LOGIN (Se ele tiver um usuário vinculado)
-        if funcionario.user:
-            user = funcionario.user
-            user.is_active = False  # O usuário perde o acesso ao sistema na hora
-            user.save()
+    # 4. Desativação do Usuário (Segurança de Acesso)
+    if funcionario.user:
+        user = funcionario.user
+        user.is_active = False 
+        user.save()
 
-        messages.success(request, f"O colaborador {funcionario.nome} foi desativado com sucesso!")
-        return redirect('funcionarios_view')
+    messages.success(request, f"O colaborador {funcionario.nome} foi desativado com sucesso!")
+    
+    # 5. Redireciona direto para a lista
+    return redirect('funcionarios_view')
 
-    # Se alguém tentar acessar o link direto via GET, mandamos para uma página de confirmação
-    return render(request, 'core/funcionario/confirm_delete.html', {'funcionario': funcionario})
 
 @user_passes_test(eh_master, login_url='dashboard')
 def funcionario_create(request):

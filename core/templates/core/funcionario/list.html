@@ -1,7 +1,19 @@
+
 {% extends "base.html" %}
 
 {% block content %}
 <div class="container mt-4">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm" role="alert">
+                <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="mb-0">Equipe de Funcionários</h2>
@@ -30,13 +42,13 @@
 
                     <tbody>
                         {% for f in funcionarios %}
-                        {# Linha fica opaca se o funcionário estiver inativo #}
-                        <tr {% if not f.ativo %}style="opacity: 0.6; background-color: #f8f9fa;"{% endif %}>
+                        {# Linha fica opaca e com fundo cinza se inativo #}
+                        <tr {% if not f.ativo %}style="opacity: 0.7; background-color: #fcfcfc;"{% endif %}>
                             <td class="ps-4">
                                 <div class="d-flex align-items-center gap-2">
-                                    <div class="{% if f.ativo %}bg-primary{% else %}bg-secondary{% endif %} text-white rounded-circle d-flex align-items-center justify-content-center"
-                                         style="width:35px;height:35px; font-weight: bold;">
-                                        {{ f.nome|first|upper }}
+                                    <div class="{% if f.ativo %}bg-primary{% else %}bg-secondary{% endif %} text-white rounded-circle d-flex align-items-center justify-content-center text-uppercase"
+                                         style="width:35px;height:35px; font-weight: bold; font-size: 0.9rem;">
+                                        {{ f.nome|first }}
                                     </div>
                                     <div>
                                         <div class="fw-bold {% if not f.ativo %}text-decoration-line-through text-muted{% endif %}">
@@ -56,11 +68,11 @@
 
                             <td class="text-center">
                                 {% if f.ativo %}
-                                    <span class="badge rounded-pill bg-success-subtle text-success border border-success">
+                                    <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle">
                                         <i class="fas fa-check-circle me-1"></i> Ativo
                                     </span>
                                 {% else %}
-                                    <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger">
+                                    <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle">
                                         <i class="fas fa-times-circle me-1"></i> Inativo
                                     </span>
                                 {% endif %}
@@ -70,23 +82,24 @@
                                 <div class="btn-group">
                                     {% if user.perfil.tipo_acesso == 'MASTER' %}
                                         <a href="{% url 'funcionario_update' f.id %}"
-                                           class="btn btn-sm btn-outline-warning" title="Editar">
+                                           class="btn btn-sm btn-outline-warning" title="Editar" data-bs-toggle="tooltip">
                                             <i class="fas fa-edit"></i>
                                         </a>
 
                                         {% if f.ativo %}
                                         <a href="{% url 'funcionario_delete' f.id %}"
-                                           class="btn btn-sm btn-outline-danger" title="Desativar"  
-                                           onclick="return confirm('Deseja realmente DESATIVAR o acesso de {{ f.nome }}?')">
+                                           class="btn btn-sm btn-outline-danger" title="Desativar Acesso"  
+                                           data-bs-toggle="tooltip"
+                                           onclick="return confirm('Deseja realmente DESATIVAR o acesso de {{ f.nome }}? Ele não poderá mais logar no sistema.')">
                                             <i class="fas fa-user-slash"></i>
                                         </a>
                                         {% else %}
-                                        <button class="btn btn-sm btn-outline-secondary" title="Já desativado" disabled>
+                                        <button class="btn btn-sm btn-outline-secondary" title="Colaborador já inativo" disabled>
                                             <i class="fas fa-ban"></i>
                                         </button>
                                         {% endif %}
                                     {% else %}
-                                        <span class="text-muted small italic">Somente leitura</span>
+                                        <span class="badge bg-light text-muted fw-normal">Somente Leitura</span>
                                     {% endif %}
                                 </div>
                             </td>
@@ -95,8 +108,8 @@
                         {% empty %}
                         <tr>
                             <td colspan="4" class="text-center py-5 text-muted">
-                                <i class="fas fa-users fa-2x mb-2"></i>
-                                <p>Nenhum funcionário encontrado.</p>
+                                <i class="fas fa-users fa-3x mb-3 opacity-25"></i>
+                                <p class="mb-0">Nenhum funcionário encontrado no banco de dados.</p>
                             </td>
                         </tr>
                         {% endfor %}
