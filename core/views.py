@@ -352,12 +352,12 @@ def departamento_delete(request, id):
     depto = get_object_or_404(Departamento, id=id)
     
     try:
-        depto.delete()
-        messages.success(request, f"Departamento '{depto.nome}' excluído com sucesso!")
+        depto.excluir() # Ou .delete(), conforme seu modelo
+        messages.success(request, f"Departamento '{depto.nome}' removido com sucesso.")
     except ProtectedError:
-        # É aqui que a mágica acontece: capturamos o erro antes dele travar o site
-        messages.error(request, f"Não é possível excluir '{depto.nome}' porque há funcionários ou cargos vinculados.")
-        
+        # Aqui capturamos o erro que você viu na tela amarela
+        messages.error(request, f"O departamento '{depto.nome}' não pode ser excluído porque possui funcionários (como o Carlos José ou a Thamires) vinculados a ele.")
+    
     return redirect('departamento_view')
 
 
