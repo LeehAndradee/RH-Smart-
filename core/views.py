@@ -355,8 +355,8 @@ def departamento_delete(request, id):
         depto.delete()
         messages.success(request, f"Departamento '{depto.nome}' excluído com sucesso!")
     except ProtectedError:
-        # Aqui capturamos o erro de vínculo e avisamos o usuário
-        messages.error(request, f"Erro: Não é possível excluir o departamento '{depto.nome}' porque existem funcionários ou cargos vinculados a ele.")
+        # É aqui que a mágica acontece: capturamos o erro antes dele travar o site
+        messages.error(request, f"Não é possível excluir '{depto.nome}' porque há funcionários ou cargos vinculados.")
         
     return redirect('departamento_view')
 
