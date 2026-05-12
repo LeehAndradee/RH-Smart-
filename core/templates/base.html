@@ -11,62 +11,99 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        body {
-            display: flex;
-            min-height: 100vh;
-            background-color: #f8f9fa;
-            margin: 0;
-        }
+    body {
+        display: flex;
+        min-height: 100vh;
+        background-color: #f8f9fa;
+        margin: 0;
+        overflow-x: hidden; /* Evita scroll horizontal estranho */
+    }
 
-        /* Sidebar Fixa */
+    /* Sidebar - Ajustada para ser condicional */
+    .sidebar {
+        width: 250px;
+        min-width: 250px;
+        background: #2c3e50;
+        color: white;
+        height: 100vh;
+        position: fixed;
+        padding: 20px;
+        z-index: 1000;
+        transition: all 0.3s; /* Transição suave ao abrir/fechar */
+    }
+
+    /* Esconde a sidebar no celular por padrão */
+    @media (max-width: 768px) {
         .sidebar {
-            width: 250px;
-            min-width: 250px;
-            background: #2c3e50;
-            color: white;
-            height: 100vh;
-            position: fixed;
-            padding: 20px;
-            z-index: 1000;
+            margin-left: -250px;
         }
-
-        .sidebar a {
-            color: #bdc3c7;
-            text-decoration: none;
-            padding: 10px;
-            display: block;
-            border-radius: 5px;
-            margin-bottom: 5px;
+        /* Classe que o JavaScript vai ativar */
+        .sidebar.active {
+            margin-left: 0;
         }
+    }
 
-        .sidebar a:hover, .sidebar a.active {
-            background: #1abc9c;
-            color: white;
-        }
+    .sidebar a {
+        color: #bdc3c7;
+        text-decoration: none;
+        padding: 10px;
+        display: block;
+        border-radius: 5px;
+        margin-bottom: 5px;
+    }
 
-        /* Container que empurra o conteúdo para a direita */
+    .sidebar a:hover, .sidebar a.active-link {
+        background: #1abc9c;
+        color: white;
+    }
+
+    /* Wrapper - Responsivo */
+    .wrapper {
+        flex: 1;
+        margin-left: 250px; /* Desktop padrão */
+        display: flex;
+        flex-direction: column;
+        transition: all 0.3s;
+    }
+
+    /* No celular, removemos a margem da sidebar */
+    @media (max-width: 768px) {
         .wrapper {
-            flex: 1;
-            margin-left: 250px; /* Mesma largura da sidebar */
-            display: flex;
-            flex-direction: column;
+            margin-left: 0;
         }
+    }
 
-        /* Topbar dentro do wrapper */
-        .topbar {
-            height: 60px;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 30px;
-            border-bottom: 1px solid #dee2e6;
-        }
+    /* Topbar */
+    .topbar {
+        height: 60px;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 15px; /* Reduzi um pouco para o mobile */
+        border-bottom: 1px solid #dee2e6;
+    }
 
-        .main-content {
-            padding: 20px;
+    /* Botão de Menu (Hambúrguer) - Invisível no PC */
+    .menu-btn {
+        display: none;
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #2c3e50;
+    }
+
+    @media (max-width: 768px) {
+        .menu-btn {
+            display: block;
         }
-    </style>
+    }
+
+    .main-content {
+        padding: 15px;
+    }
+</style>
 
     {% block extra_head %}{% endblock %}
 </head>
