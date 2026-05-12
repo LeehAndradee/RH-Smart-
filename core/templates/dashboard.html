@@ -170,14 +170,14 @@
                         <tr>
                             <td>{{ holerite.mes }}/{{ holerite.ano }}</td>
                             <td>
-                                {% if holerite.status %}
+                                {% if holerite.fechada %}
                                     <span class="badge bg-success">Liberado</span>
                                 {% else %}
                                     <span class="badge bg-secondary">Em processamento</span>
                                 {% endif %}
                             </td>
                             <td class="text-end">
-                                {% if holerite.status %}
+                                {% if holerite.fechada %}
                                     <button class="btn btn-sm btn-light border"><i class="fas fa-download"></i></button>
                                 {% else %}
                                     <button class="btn btn-sm btn-light border" disabled title="Aguardando liberação"><i class="fas fa-lock"></i></button>
