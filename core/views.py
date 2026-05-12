@@ -82,7 +82,7 @@ def dashboard_view(request):
         # O funcionário vê apenas seus holerites já liberados (status=True)
         meus_holerites = FolhaPagamento.objects.filter(
             funcionario=funcionario
-        ).order_by('-ano', '-mes')[:3]
+        ).order_by('-ano', '-mes', '-id')[:3]
 
         context = {
             'funcionario': funcionario,
