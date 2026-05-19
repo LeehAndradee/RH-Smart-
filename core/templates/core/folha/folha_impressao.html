@@ -158,13 +158,8 @@
                 <table style="margin: 0;">
                     <tr>
                         <td><span class="label">Salário Base</span>R$ {{ folha.salario_base_Snapshot|floatformat:2 }}</td>
-                        <td><span class="label">Base Cálc. FGTS</span>R$ {{ folha.salario_bruto|default:folha.salario_base_Snapshot|floatformat:2 }}</td>
+                        <td><span class="label">Salário Bruto</span>R$ {{ folha.salario_bruto|floatformat:2 }}</td>
                         <td><span class="label">FGTS do Mês</span>R$ {{ folha.fgts|floatformat:2 }}</td>
-                    </tr>
-                    <tr>
-                        <td><span class="label">Base Cálc. INSS</span>R$ {{ folha.base_calc_inss|default:folha.salario_base_Snapshot|floatformat:2 }}</td>
-                        <td><span class="label">Base Cálc. IRRF</span>R$ {{ folha.base_calc_irrf|default:"0.00"|floatformat:2 }}</td>
-                        <td><span class="label">Faixa IRRF</span>{{ folha.faixa_irrf|default:"Isento" }}</td>
                     </tr>
                 </table>
             </td>
