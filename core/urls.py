@@ -74,6 +74,7 @@ urlpatterns = [
 
     # ROTA DE LOGOUT
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('funcionarios/ativar/<int:id>/', views.funcionario_ativar, name='funcionario_ativar'),
 ]
 
 if settings.DEBUG:

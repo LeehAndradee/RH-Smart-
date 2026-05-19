@@ -82,22 +82,26 @@
                                 <div class="btn-group">
                                     {% if user.perfil.tipo_acesso == 'MASTER' %}
                                         <a href="{% url 'funcionario_update' f.id %}"
-                                           class="btn btn-sm btn-outline-warning" title="Editar" data-bs-toggle="tooltip">
+                                        class="btn btn-sm btn-outline-warning" title="Editar" data-bs-toggle="tooltip">
                                             <i class="fas fa-edit"></i>
                                         </a>
 
                                         {% if f.ativo %}
-                                        <a href="{% url 'funcionario_delete' f.id %}"
-                                           class="btn btn-sm btn-outline-danger" title="Desativar Acesso"  
-                                           data-bs-toggle="tooltip"
-                                           onclick="return confirm('Deseja realmente DESATIVAR o acesso de {{ f.nome }}? Ele não poderá mais logar no sistema.')">
-                                            <i class="fas fa-user-slash"></i>
-                                        </a>
+                                            <a href="{% url 'funcionario_delete' f.id %}"
+                                            class="btn btn-sm btn-outline-danger" title="Desativar Acesso"  
+                                            data-bs-toggle="tooltip"
+                                            onclick="return confirm('Deseja realmente DESATIVAR o acesso de {{ f.nome }}? Ele não poderá mais logar no sistema.')">
+                                                <i class="fas fa-user-slash"></i>
+                                            </a>
                                         {% else %}
-                                        <button class="btn btn-sm btn-outline-secondary" title="Colaborador já inativo" disabled>
-                                            <i class="fas fa-ban"></i>
-                                        </button>
+                                            <a href="{% url 'funcionario_ativar' f.id %}"
+                                            class="btn btn-sm btn-outline-success" title="Reativar Acesso"
+                                            data-bs-toggle="tooltip"
+                                            onclick="return confirm('Deseja REATIVAR o acesso de {{ f.nome }}? O login dele voltará a funcionar.')">
+                                                <i class="fas fa-user-check"></i>
+                                            </a>
                                         {% endif %}
+
                                     {% else %}
                                         <span class="badge bg-light text-muted fw-normal">Somente Leitura</span>
                                     {% endif %}

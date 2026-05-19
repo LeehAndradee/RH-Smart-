@@ -254,6 +254,26 @@ def funcionario_create(request):
     cargos = Cargo.objects.all().order_by('nome')
     return render(request, 'core/funcionario/form.html', {'cargos': cargos})
 
+
+
+@user_passes_test(lambda u: u.perfil.tipo_acesso == 'MASTER', login_url='dashboard_view')
+@login_required
+def funcionario_ativar(request, id):
+    funcionario = get_object_or_404(Funcionario, id=id)
+    
+    # 1. Reativa no sistema de RH
+    funcionario.ativo = True
+    funcionario.save()
+
+    # 2. Reativa o login do usuário no Django (O que estava faltando!)
+    if funcionario.user:
+        user = funcionario.user
+        user.is_active = True 
+        user.save()
+
+    messages.success(request, f"O colaborador {funcionario.nome} foi REATIVADO com sucesso! O acesso dele já está liberado.")
+    return redirect('funcionarios_view')
+
 # --- CARGOS ---
 @user_passes_test(eh_master, login_url='dashboard_view')
 def cargos_view(request):
