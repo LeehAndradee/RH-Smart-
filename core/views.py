@@ -20,6 +20,7 @@ from django.db.models import ProtectedError
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 from io import BytesIO
+from django.core.exceptions import PermissionDenied
 
 def eh_master(user):
     # Checa se o usuário está logado e se o perfil dele é MASTER
@@ -160,8 +161,6 @@ def funcionario_update(request, id):
     })
 
 @user_passes_test(eh_master, login_url='dashboard')
-
-@user_passes_test(eh_master, login_url='dashboard')
 @login_required
 def funcionario_delete(request, id):
     # 1. Busca o funcionário
@@ -243,11 +242,12 @@ def funcionario_create(request):
                 salario_base=salario_base
             )
 
-           
+            messages.success(request, f"Colaborador {nome} cadastrado com sucesso!")
+            
             return redirect('funcionarios_view')
 
         except Exception as e:
-           
+            messages.error(request, f"Erro ao cadastrar funcionário: {str(e)}")
             return redirect('funcionario_create')
 
     # GET
@@ -726,9 +726,14 @@ def departamento_delete(request, id):
     depto.delete()
     return redirect('departamento_view')
 
-@user_passes_test(eh_master, login_url='dashboard_view')
+@login_required # Garante apenas que o usuário esteja logado
 def imprimir_holerite(request, folha_id):
     folha = get_object_or_404(FolhaPagamento, id=folha_id)
+    
+    # 🛡️ NOVA TRAVA DE SEGURANÇA MISTA:
+    # Se NÃO for MASTER E a folha NÃO pertencer ao usuário logado, BARRA!
+    if request.user.perfil.tipo_acesso != 'MASTER' and folha.funcionario.user != request.user:
+        raise PermissionDenied("Você não tem permissão para visualizar este holerite.")
     
     # 1. Carrega o template HTML que você já criou
     template = get_template('core/folha/folha_impressao.html')
@@ -744,7 +749,7 @@ def imprimir_holerite(request, folha_id):
     if not pdf.err:
         response = HttpResponse(result.getvalue(), content_type='application/pdf')
         
-        # O segredo da "tela preta" é o 'inline' aqui:
+        # Mantém o inline para abrir direto no navegador/celular
         response['Content-Disposition'] = f'inline; filename="holerite_{folha.funcionario.nome}.pdf"'
         return response
     

@@ -17,7 +17,7 @@
                         
                         <!-- Seleção de Funcionário -->
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Funcionário</label>
+                            <label class="form-label fw-bold">Funcionário *</label>
                             <select name="funcionario" class="form-select" required>
                                 <option value="" disabled {% if not falta %}selected{% endif %}>Selecione quem faltou...</option>
                                 {% for f in funcionarios %}
@@ -31,14 +31,14 @@
                         <div class="row">
                             <!-- Data exata do ocorrido -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Data da Falta</label>
+                                <label class="form-label fw-bold">Data da Falta *</label>
                                 <!-- O filtro |date:"Y-m-d" é obrigatório para o input type="date" reconhecer o valor -->
                                 <input type="date" name="data" class="form-control" value="{{ falta.data|date:'Y-m-d' }}" required>
                             </div>
                             
                             <!-- Valor do Desconto Manual -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold text-danger">Valor do Desconto (R$)</label>
+                                <label class="form-label fw-bold text-danger">Valor do Desconto (R$) *</label>
                                 <input type="number" step="0.01" name="valor_desconto" class="form-control" value="{{ falta.valor_desconto|stringformat:'.2f'|default:'0.00' }}" required>
                                 <small class="text-muted">Valor a ser abatido no holerite.</small>
                             </div>
@@ -47,7 +47,7 @@
                         <div class="row">
                             <!-- Mês de Referência -->
                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Mês da Folha</label>
+                                <label class="form-label fw-bold">Mês da Folha *</label>
                                 <select name="mes_referencia" class="form-select" required>
                                     <option value="1" {% if falta.mes_referencia == 1 %}selected{% endif %}>Janeiro</option>
                                     <option value="2" {% if falta.mes_referencia == 2 %}selected{% endif %}>Fevereiro</option>
@@ -66,7 +66,7 @@
                             </div>
                                                         <!-- Ano de Referência -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Ano da Folha</label>
+                                <label class="form-label fw-bold">Ano da Folha *</label>
                                 <input type="number" name="ano_referencia" class="form-control" value="{{ falta.ano_referencia|default:'2026' }}" required>
                             </div>
                         </div>

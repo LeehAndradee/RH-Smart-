@@ -17,7 +17,7 @@
                         {% csrf_token %}
                         
                         <div class="mb-4">
-                            <label class="form-label fw-bold text-muted small">COLABORADOR</label>
+                            <label class="form-label fw-bold text-muted small">COLABORADOR *</label>
                             <select name="funcionario" class="form-select form-select-lg border-2 shadow-sm" required>
                                 <option value="" disabled {% if not folha %}selected{% endif %}>Selecione o funcionário...</option>
                                 {% for f in funcionarios %}
@@ -30,15 +30,15 @@
 
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
-                                <label class="form-label fw-bold small">MÊS</label>
+                                <label class="form-label fw-bold small">MÊS *</label>
                                 <input type="number" name="mes" class="form-control" value="{{ folha.mes|default:4 }}" required>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-bold small">ANO</label>
+                                <label class="form-label fw-bold small">ANO *</label>
                                 <input type="number" name="ano" class="form-control" value="{{ folha.ano|default:2026 }}" required>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-bold small text-primary">TIPO DE FOLHA</label>
+                                <label class="form-label fw-bold small text-primary">TIPO DE FOLHA *</label>
                                 <select name="tipo" id="id_tipo" class="form-select border-primary fw-bold" required>
                                     <option value="MENSAL" {% if folha.tipo == 'MENSAL' %}selected{% endif %}>Mensal</option>
                                     <option value="FERIAS" {% if folha.tipo == 'FERIAS' %}selected{% endif %}>Férias</option>

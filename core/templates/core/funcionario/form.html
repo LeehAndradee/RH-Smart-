@@ -20,21 +20,21 @@
 
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label text-secondary">Nome Completo</label>
+                    <label class="form-label text-secondary">Nome Completo *</label>
                     <input type="text" name="nome" class="form-control"
                            value="{{ funcionario.nome|default:'' }}" 
                            {% if user.perfil.tipo_acesso != 'MASTER' %}readonly{% endif %} required>
                 </div>
 
                 <div class="col-md-3 mb-3">
-                    <label class="form-label text-secondary">CPF</label>
+                    <label class="form-label text-secondary">CPF *</label>
                     <input type="text" name="cpf" class="form-control"
                            value="{{ funcionario.cpf|default:'' }}"
                            {% if funcionario or user.perfil.tipo_acesso != 'MASTER' %}readonly{% endif %} required>
                 </div>
 
                 <div class="col-md-3 mb-3">
-                    <label class="form-label text-secondary">Nascimento</label>
+                    <label class="form-label text-secondary">Nascimento *</label>
                     <input type="date" name="data_nascimento" class="form-control"
                            value="{{ funcionario.data_nascimento|date:'Y-m-d' }}" 
                            {% if user.perfil.tipo_acesso != 'MASTER' %}readonly{% endif %} required>
@@ -43,14 +43,14 @@
 
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label text-secondary">Nome da Mãe</label>
+                    <label class="form-label text-secondary">Nome da Mãe *</label>
                     <input type="text" name="nome_mae" class="form-control"
                            value="{{ funcionario.nome_mae|default:'' }}" 
                            {% if user.perfil.tipo_acesso != 'MASTER' %}readonly{% endif %} required>
                 </div>
 
                 <div class="col-md-6 mb-3">
-                    <label class="form-label text-secondary">Nome do Pai</label>
+                    <label class="form-label text-secondary">Nome do Pai </label>
                     <input type="text" name="nome_pai" class="form-control"
                            value="{{ funcionario.nome_pai|default:'' }}"
                            {% if user.perfil.tipo_acesso != 'MASTER' %}readonly{% endif %}>
@@ -61,14 +61,14 @@
 
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <label class="form-label text-secondary">Email</label>
+                    <label class="form-label text-secondary">Email *</label>
                     <input type="email" name="email" class="form-control"
                            value="{{ funcionario.email|default:'' }}" 
                            {% if user.perfil.tipo_acesso != 'MASTER' %}readonly{% endif %} required>
                 </div>
 
                 <div class="col-md-4 mb-3">
-                    <label class="form-label text-secondary">Telefone</label>
+                    <label class="form-label text-secondary">Telefone *</label>
                     <input type="text" name="telefone" class="form-control"
                            value="{{ funcionario.telefone|default:'' }}" 
                            {% if user.perfil.tipo_acesso != 'MASTER' %}readonly{% endif %} required>
@@ -83,7 +83,7 @@
             </div>
 
             <div class="mb-3">
-                <label class="form-label text-secondary">Endereço</label>
+                <label class="form-label text-secondary">Endereço </label>
                 <textarea name="endereco_completo" class="form-control" rows="2" 
                           {% if user.perfil.tipo_acesso != 'MASTER' %}readonly{% endif %}>{{ funcionario.endereco_completo|default:'' }}</textarea>
             </div>
@@ -92,7 +92,7 @@
 
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label text-secondary">Cargo</label>
+                    <label class="form-label text-secondary">Cargo *</label>
                     <select name="cargo" class="form-select" required 
                             {% if user.perfil.tipo_acesso != 'MASTER' %}disabled{% endif %}>
                         <option value="">Selecione...</option>
@@ -106,7 +106,7 @@
                 </div>
 
                 <div class="col-md-6 mb-3">
-                    <label class="form-label text-secondary">Salário Base</label>
+                    <label class="form-label text-secondary">Salário Base *</label>
                     <div class="input-group">
                         <span class="input-group-text">R$</span>
                         <input type="number" step="0.01" name="salario_base"
@@ -119,7 +119,7 @@
 
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label text-secondary">Data de Admissão</label>
+                    <label class="form-label text-secondary">Data de Admissão *</label>
                     <input type="date" name="data_admissao" class="form-control"
                            value="{{ funcionario.data_admissao|date:'Y-m-d' }}" 
                            {% if user.perfil.tipo_acesso != 'MASTER' %}readonly{% endif %} required>

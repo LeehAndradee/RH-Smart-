@@ -21,7 +21,7 @@
 
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label text-secondary">Nome do Cargo</label>
+                    <label class="form-label text-secondary">Nome do Cargo *</label>
                     <input type="text" name="nome" class="form-control"
                            value="{{ cargo.nome|default:'' }}" required>
                 </div>
@@ -39,7 +39,7 @@
 
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <label class="form-label text-secondary">Carga Horária</label>
+                    <label class="form-label text-secondary">Carga Horária *</label>
                     <div class="input-group">
                         <input type="number" name="carga_horaria" class="form-control"
                                value="{{ cargo.carga_horaria|default:220 }}" required>
