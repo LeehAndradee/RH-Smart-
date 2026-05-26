@@ -520,7 +520,7 @@ def cadastrar_falta(request):
             # Validação básica de segurança
             if not funcionario_id or not data:
                 messages.error(request, "Selecione o colaborador e informe a data da ocorrência.")
-                return redirect('cadastrar_falta')
+                return redirect('falta_list')
 
             funcionario = get_object_or_404(Funcionario, id=funcionario_id)
 
@@ -815,7 +815,7 @@ def folha_delete(request, id):
         
         # ✉️ Alerta de Sucesso
         messages.success(request, f"A folha de pagamento de {nome_colaborador} ({competencia}) foi excluída com sucesso.")
-        return redirect('folhas_view') # Ajuste para o nome exato da sua rota de listagem de folhas
+        return redirect('folha_view') # Ajuste para o nome exato da sua rota de listagem de folhas
         
     except Exception as e:
         messages.error(request, f"Erro ao excluir a folha de pagamento: {str(e)}")
