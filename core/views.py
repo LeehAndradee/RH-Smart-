@@ -279,39 +279,57 @@ def funcionario_ativar(request, id):
 def cargos_view(request):
     cargos = Cargo.objects.all()
     return render(request, 'core/cargo/list.html', {'cargos': cargos})
-
-@user_passes_test(eh_master, login_url='dashboard')
+@user_passes_test(eh_master, login_url='dashboard_view') # Padronizado para dashboard_view
+@login_required
 def cargo_create(request):
     if request.method == 'POST':
-        nome = request.POST.get('nome')
-        nivel = request.POST.get('nivel')
-        carga_horaria = request.POST.get('carga_horaria')
-        departamento_id = request.POST.get('departamento')
+        try:
+            nome = request.POST.get('nome')
+            nivel = request.POST.get('nivel')
+            carga_horaria = request.POST.get('carga_horaria')
+            departamento_id = request.POST.get('departamento')
 
-        novo_cargo = Cargo(
-            nome=nome,
-            nivel=nivel,
-            carga_horaria=carga_horaria,
-            departamento_id=departamento_id,
-        )
-        novo_cargo.save()
-        return redirect('cargos_view')
+            novo_cargo = Cargo(
+                nome=nome,
+                nivel=nivel,
+                carga_horaria=carga_horaria,
+                departamento_id=departamento_id,
+            )
+            novo_cargo.save()
+            
+            # ✉️ Injeta a mensagem de sucesso
+            messages.success(request, f"Cargo '{nome}' adicionado com sucesso!")
+            return redirect('cargos_view')
+            
+        except Exception as e:
+            messages.error(request, f"Erro ao criar cargo: {str(e)}")
+            return redirect('cargo_create')
     
-    departamentos = Departamento.objects.all()
+    departamentos = Departamento.objects.all().order_by('nome')
     return render(request, 'core/cargo/form.html', {'departamentos': departamentos})
 
+
 @user_passes_test(eh_master, login_url='dashboard_view')
+@login_required
 def cargo_update(request, id):
     cargo = get_object_or_404(Cargo, id=id)
     
     if request.method == 'POST':
-        cargo.nome = request.POST.get('nome')
-        cargo.nivel = request.POST.get('nivel') # Novo campo
-        cargo.carga_horaria = request.POST.get('carga_horaria') # Novo campo
-        cargo.departamento_id = request.POST.get('departamento')
-        
-        cargo.save()
-        return redirect('cargos_view')
+        try:
+            cargo.nome = request.POST.get('nome')
+            cargo.nivel = request.POST.get('nivel')
+            cargo.carga_horaria = request.POST.get('carga_horaria')
+            cargo.departamento_id = request.POST.get('departamento')
+            
+            cargo.save()
+            
+            # ✉️ Injeta a mensagem de sucesso na alteração
+            messages.success(request, f"Cargo '{cargo.nome}' atualizado com sucesso!")
+            return redirect('cargos_view')
+            
+        except Exception as e:
+            messages.error(request, f"Erro ao atualizar cargo: {str(e)}")
+            return redirect('cargos_view')
 
     departamentos = Departamento.objects.all().order_by('nome')
     return render(request, 'core/cargo/form.html', {
@@ -401,52 +419,84 @@ def departamento_delete(request, id):
 
 # --- EVENTOS ---
 @user_passes_test(eh_master, login_url='dashboard_view')
+@login_required
 def eventos_view(request):
     eventos = Evento.objects.all().order_by('nome')
     return render(request, 'core/evento/list.html', {'eventos': eventos})
 
 
-@user_passes_test(eh_master, login_url='dashboard')
+@user_passes_test(eh_master, login_url='dashboard_view')
+@login_required
 def evento_create(request):
     if request.method == "POST":
-        nome = request.POST.get('nome') 
-        tipo = request.POST.get('tipo')
-        # Pegando os nomes corretos do formulário
-        valor = request.POST.get('valor_fixo') 
+        try:
+            nome = request.POST.get('nome') 
+            tipo = request.POST.get('tipo')
+            valor = request.POST.get('valor_fixo') 
 
-        Evento.objects.create(
-            nome=nome,
-            tipo=tipo,
-            # Correção: usando as variáveis tratadas
-            valor_fixo=valor if valor else None, 
-        )
-        return redirect('eventos_list')
+            # Validação básica
+            if not nome or not tipo:
+                messages.error(request, "Preencha os campos obrigatórios (Nome e Tipo).")
+                return redirect('evento_create')
+
+            Evento.objects.create(
+                nome=nome,
+                tipo=tipo,
+                valor_fixo=valor if valor else None, 
+            )
+            
+            # ✉️ Alerta de Sucesso
+            messages.success(request, f"Evento '{nome}' criado com sucesso!")
+            return redirect('eventos_view') # Redireciona para o nome correto da rota
+            
+        except Exception as e:
+            messages.error(request, f"Erro ao criar evento: {str(e)}")
+            return redirect('evento_create')
     
     return render(request, 'core/evento/form.html')
 
+
 @user_passes_test(eh_master, login_url='dashboard_view')
+@login_required
 def evento_update(request, id):
     evento = get_object_or_404(Evento, id=id)
     
     if request.method == "POST":
-        evento.nome = request.POST.get('nome')
-        evento.tipo = request.POST.get('tipo')
-        
-        valor_fixo = request.POST.get('valor_fixo')
-        
-        # Tratamento para evitar erro de string vazia no banco
-        evento.valor_fixo = valor_fixo if valor_fixo else None
-        
-        evento.save()
-        return redirect('eventos_list')
+        try:
+            evento.nome = request.POST.get('nome')
+            evento.tipo = request.POST.get('tipo')
+            
+            valor_fixo = request.POST.get('valor_fixo')
+            evento.valor_fixo = valor_fixo if valor_fixo else None
+            
+            evento.save()
+            
+            # ✉️ Alerta de Sucesso
+            messages.success(request, f"Evento '{evento.nome}' atualizado com sucesso!")
+            return redirect('eventos_view')
+            
+        except Exception as e:
+            messages.error(request, f"Erro ao atualizar evento: {str(e)}")
+            return redirect('eventos_view')
 
     return render(request, 'core/evento/form.html', {'evento': evento})
 
-@user_passes_test(eh_master, login_url='dashboard')
+
+@user_passes_test(eh_master, login_url='dashboard_view')
+@login_required
 def evento_delete(request, id):
-    evento = get_object_or_404(Evento, id=id)
-    evento.delete()
-    return redirect('eventos_list')
+    try:
+        evento = get_object_or_404(Evento, id=id)
+        nome_evento = evento.nome
+        evento.delete()
+        
+        # ✉️ Alerta de Sucesso na exclusão
+        messages.success(request, f"Evento '{nome_evento}' excluído permanentemente!")
+        
+    except Exception as e:
+        messages.error(request, f"Não foi possível excluir o evento: {str(e)}")
+        
+    return redirect('eventos_view')
 
 
 # --- FALTAS ---
@@ -454,36 +504,55 @@ def evento_delete(request, id):
 def faltas_view(request):
     faltas = Falta.objects.all()
     return render(request, 'core/falta/list.html', {'faltas': faltas})
-
 @user_passes_test(eh_master, login_url='dashboard_view')
+@login_required
 def cadastrar_falta(request):
     if request.method == 'POST':
-        funcionario_id = request.POST.get('funcionario')
-        data = request.POST.get('data')
-        motivo = request.POST.get('motivo')
-        atestado = request.FILES.get('atestado')
-        justificada = request.POST.get('justificada') == 'on'
-        
-        # NOVOS CAMPOS QUE ESTAVAM FALTANDO NA VIEW:
-        mes_referencia = request.POST.get('mes_referencia')
-        ano_referencia = request.POST.get('ano_referencia')
-        valor_desconto = request.POST.get('valor_desconto')
+        try:
+            funcionario_id = request.POST.get('funcionario')
+            data = request.POST.get('data')
+            motivo = request.POST.get('motivo')
+            atestado = request.FILES.get('atestado')
+            justificada = request.POST.get('justificada') == 'on'
+            
+            # NOVOS CAMPOS QUE ESTAVAM FALTANDO NA VIEW:
+            mes_referencia = request.POST.get('mes_referencia')
+            ano_referencia = request.POST.get('ano_referencia')
+            valor_desconto = request.POST.get('valor_desconto')
 
-        funcionario = get_object_or_404(Funcionario, id=funcionario_id)
+            # Validação básica de segurança
+            if not funcionario_id or not data:
+                messages.error(request, "Selecione o colaborador e informe a data da ocorrência.")
+                return redirect('cadastrar_falta')
 
-        # Atualizamos o .create() para incluir as novas variáveis
-        Falta.objects.create(
-            funcionario=funcionario,
-            data=data,
-            motivo=motivo,
-            atestado=atestado,
-            justificada=justificada,
-            mes_referencia=int(mes_referencia) if mes_referencia else 0,
-            ano_referencia=int(ano_referencia) if ano_referencia else 0,
-            valor_desconto=valor_desconto.replace(',', '.') if valor_desconto else 0.00
-        )
+            funcionario = get_object_or_404(Funcionario, id=funcionario_id)
 
-        return redirect('faltas_list')
+            # Tratamento seguro para converter valores numéricos e decimais
+            mes_ref = int(mes_referencia) if mes_referencia else 0
+            ano_ref = int(ano_referencia) if ano_referencia else 0
+            
+            # Garante a formatação correta de float/decimal para o banco de dados
+            v_desconto = valor_desconto.replace(',', '.') if valor_desconto else "0.00"
+
+            # Cria o registro da falta no banco
+            Falta.objects.create(
+                funcionario=funcionario,
+                data=data,
+                motivo=motivo,
+                atestado=atestado,
+                justificada=justificada,
+                mes_referencia=mes_ref,
+                ano_referencia=ano_ref,
+                valor_desconto=v_desconto
+            )
+
+            # ✉️ Alerta de Sucesso
+            messages.success(request, f"Ocorrência de falta registrada para {funcionario.nome} com sucesso!")
+            return redirect('faltas_view') # Padronizado para acompanhar o padrão 'nome_view' do seu urls.py
+            
+        except Exception as e:
+            messages.error(request, f"Erro ao registrar falta: {str(e)}")
+            return redirect('cadastrar_falta')
 
     context = {
         'funcionarios': Funcionario.objects.all().order_by('nome'),
@@ -565,91 +634,100 @@ def folha_view(request):
     
     return render(request, 'core/folha/list.html', {'folhas': folhas})
 
-@user_passes_test(eh_master, login_url='dashboard')
+from datetime import datetime
+
+@user_passes_test(eh_master, login_url='dashboard_view') # Padronizado para dashboard_view
+@login_required
 def folha_create(request):
     if request.method == 'POST':
-        funcionario_id = request.POST.get('funcionario')
-        mes = int(request.POST.get('mes'))
-        ano = int(request.POST.get('ano'))
-        tipo = request.POST.get('tipo')
+        try:
+            funcionario_id = request.POST.get('funcionario')
+            mes = int(request.POST.get('mes'))
+            ano = int(request.POST.get('ano'))
+            tipo = request.POST.get('tipo')
 
-        funcionario = get_object_or_404(Funcionario, id=funcionario_id)
+            funcionario = get_object_or_404(Funcionario, id=funcionario_id)
 
-        # ✅ 13º parcela
-        valor_parcela = request.POST.get('parcela_13o')
-        parcela = int(valor_parcela) if valor_parcela else None
+            # ✅ 13º parcela
+            valor_parcela = request.POST.get('parcela_13o')
+            parcela = int(valor_parcela) if valor_parcela else None
 
-        # ✅ RESCISÃO
-        data_rescisao = request.POST.get('data_rescisao')
-        motivo_rescisao = request.POST.get('motivo_rescisao')
+            # ✅ RESCISÃO
+            data_rescisao = request.POST.get('data_rescisao')
+            motivo_rescisao = request.POST.get('motivo_rescisao')
 
-        if data_rescisao:
-            data_rescisao = datetime.strptime(data_rescisao, '%Y-%m-%d').date()
-        else:
-            data_rescisao = None
+            if data_rescisao:
+                data_rescisao = datetime.strptime(data_rescisao, '%Y-%m-%d').date()
+            else:
+                data_rescisao = None
 
-        # ✅ Criação da folha
-        nova_folha = FolhaPagamento(
-            funcionario=funcionario,
-            mes=mes,
-            ano=ano,
-            tipo=tipo,
-            parcela_13o=parcela,
-            data_rescisao=data_rescisao,
-            motivo_rescisao=motivo_rescisao,
-            fechada=False
-        )
+            # ✅ Criação da folha
+            nova_folha = FolhaPagamento(
+                funcionario=funcionario,
+                mes=mes,
+                ano=ano,
+                tipo=tipo,
+                parcela_13o=parcela,
+                data_rescisao=data_rescisao,
+                motivo_rescisao=motivo_rescisao,
+                fechada=False
+            )
+            nova_folha.save()
 
-        nova_folha.save()
+            # ✅ 2. Salvar Eventos Extras (preenchidos manualmente na tela)
+            eventos_ids = request.POST.getlist('evento_id[]')
+            eventos_valores = request.POST.getlist('evento_valor[]')
 
-       # ✅ 2. Salvar Eventos Extras (os que você preenche manualmente na tela)
-        eventos_ids = request.POST.getlist('evento_id[]')
-        eventos_valores = request.POST.getlist('evento_valor[]')
+            for eid, valor in zip(eventos_ids, eventos_valores):
+                if eid and valor:
+                    ItemFolha.objects.create(
+                        folha=nova_folha,
+                        evento_id=eid,
+                        valor=valor.replace(',', '.')
+                    )
 
-        for eid, valor in zip(eventos_ids, eventos_valores):
-            if eid and valor:
-                ItemFolha.objects.create(
-                    folha=nova_folha,
-                    evento_id=eid,
-                    valor=valor.replace(',', '.')
-                )
+            # ✅ 3. PROCESSAR FALTAS AUTOMATICAMENTE
+            faltas_do_mes = Falta.objects.filter(
+                funcionario=nova_folha.funcionario,
+                mes_referencia=nova_folha.mes,
+                ano_referencia=nova_folha.ano,
+                justificada=False
+            )
 
-        # ✅ 3. PROCESSAR FALTAS AUTOMATICAMENTE
-        # Corrigido: usando 'nova_folha' e não 'folha'
-        faltas_do_mes = Falta.objects.filter(
-            funcionario=nova_folha.funcionario,
-            mes_referencia=nova_folha.mes,
-            ano_referencia=nova_folha.ano,
-            justificada=False
-        )
+            total_desconto_faltas = sum(falta.valor_desconto for falta in faltas_do_mes)
 
-        total_desconto_faltas = sum(falta.valor_desconto for falta in faltas_do_mes)
+            # ✅ 4. Transformar o total de faltas em um Item de Folha
+            if total_desconto_faltas > 0:
+                evento_falta = Evento.objects.filter(nome__icontains="Falta", tipo='DESCONTO').first()
+                
+                if evento_falta:
+                    ItemFolha.objects.create(
+                        folha=nova_folha,
+                        evento=evento_falta,
+                        valor=total_desconto_faltas,
+                        observacao=f"Desconto de {faltas_do_mes.count()} faltas injustificadas."
+                    )
 
-        # ✅ 4. Transformar o total de faltas em um Item de Folha
-        if total_desconto_faltas > 0:
-            # Buscamos o evento 'Falta' que você cadastrou no banco
-            # Certifique-se de que o nome no banco seja exatamente este ou use o ID fixo
-            evento_falta = Evento.objects.filter(nome__icontains="Falta", tipo='DESCONTO').first()
-            
-            if evento_falta:
-                ItemFolha.objects.create(
-                    folha=nova_folha,
-                    evento=evento_falta,
-                    valor=total_desconto_faltas,
-                    observacao=f"Desconto de {faltas_do_mes.count()} faltas injustificadas."
-                )
+            # ✅ Recalcular com tudo aplicado
+            nova_folha.calcular_tudo()
+            nova_folha.save()
 
-        # ✅ Recalcular com tudo aplicado
-        nova_folha.calcular_tudo()
-        nova_folha.save()
+            # ✉️ Alerta de Sucesso (Será exibido na tela de destino detalhada)
+            messages.success(
+                request, 
+                f"Folha de Pagamento de {funcionario.nome} ({mes:02d}/{ano}) gerada e calculada com sucesso!"
+            )
+            return redirect('folha_detail', id=nova_folha.id)
 
-        return redirect('folha_detail', id=nova_folha.id)
+        except Exception as e:
+            # ✉️ Alerta de Erro caso o banco rejeite (Ex: Unique contraint de folha duplicada)
+            messages.error(request, f"Erro ao processar e gerar a folha: {str(e)}")
+            return redirect('folha_create')
 
     context = {
         'funcionarios': Funcionario.objects.all().order_by('nome'),
         'eventos': Evento.objects.all().order_by('nome')
     }
-
     return render(request, 'core/folha/form.html', context)
 
 def folha_detail(request, id):
@@ -667,21 +745,34 @@ def folha_detail(request, id):
     return render(request, 'core/folha/detail.html', {'folha': folha})
 
 @user_passes_test(eh_master, login_url='dashboard_view')
+@login_required
 def folha_update(request, id):
     folha = get_object_or_404(FolhaPagamento, id=id)
 
+    # 🛑 Bloqueio preventivo: Se a folha já foi fechada oficialmente, impede a edição
     if folha.fechada:
-        from django.contrib import messages
-        messages.error(request, "Folha já está fechada e não pode ser editada.")
+        messages.error(request, "Esta folha de pagamento já está fechada e não pode mais ser editada ou recalculada.")
         return redirect('folha_detail', id=id)
 
     if request.method == 'POST':
-        folha.mes = int(request.POST.get('mes'))
-        folha.ano = int(request.POST.get('ano'))
-        folha.tipo = request.POST.get('tipo')
-        # Aqui você também poderia atualizar os Itens da Folha se quiser
-        folha.save()
-        return redirect('folha_detail', id=folha.id)
+        try:
+            folha.mes = int(request.POST.get('mes'))
+            folha.ano = int(request.POST.get('ano'))
+            folha.tipo = request.POST.get('tipo')
+            
+            # 🔄 Executa as fórmulas de cálculo do backend com os novos dados do POST
+            if hasattr(folha, 'calcular_tudo'):
+                folha.calcular_tudo()
+                
+            folha.save()
+            
+            # ✉️ Alerta de Sucesso
+            messages.success(request, f"Folha de pagamento atualizada e recalculada com sucesso!")
+            return redirect('folha_detail', id=folha.id)
+            
+        except Exception as e:
+            messages.error(request, f"Erro ao atualizar e recalcular a folha: {str(e)}")
+            return redirect('folha_update', id=id)
 
     context = {
         'folha': folha,
@@ -689,26 +780,49 @@ def folha_update(request, id):
         'eventos': Evento.objects.all().order_by('nome')
     }
     return render(request, 'core/folha/form.html', context)
-
 @user_passes_test(eh_master, login_url='dashboard_view')
+@login_required
 def folha_fechar(request, id):
     folha = get_object_or_404(FolhaPagamento, id=id)
-    folha.fechada = True  # Altera o boolean
-    folha.save()
+    
+    try:
+        folha.fechada = True  # Altera o boolean para travar edições
+        folha.save()
+        
+        # ✉️ Alerta de Sucesso
+        messages.success(
+            request, 
+            f"Folha de pagamento de {folha.funcionario.nome} foi FECHADA oficialmente! O holerite já está disponível para o colaborador."
+        )
+    except Exception as e:
+        messages.error(request, f"Erro ao fechar a folha: {str(e)}")
+        
     return redirect('folha_detail', id=id)
 
 
-@user_passes_test(eh_master, login_url='dashboard')
+@user_passes_test(eh_master, login_url='dashboard_view') # Padronizado para dashboard_view
+@login_required
 def folha_delete(request, id):
     folha = get_object_or_404(FolhaPagamento, id=id)
 
+    # 🛑 Trava de Segurança: impede a exclusão física se a folha já foi encerrada
     if folha.fechada:
-        from django.contrib import messages
-        messages.error(request, "Folha fechada não pode ser excluída.")
+        messages.error(request, "Atenção: Uma folha de pagamento já encerrada/fechada não pode ser excluída do sistema.")
         return redirect('folha_detail', id=id)
 
-    folha.delete()
-    return redirect('folha_view')
+    try:
+        nome_colaborador = folha.funcionario.nome
+        competencia = f"{folha.mes:02d}/{folha.ano}"
+        
+        folha.delete()
+        
+        # ✉️ Alerta de Sucesso
+        messages.success(request, f"A folha de pagamento de {nome_colaborador} ({competencia}) foi excluída com sucesso.")
+        return redirect('folhas_view') # Ajuste para o nome exato da sua rota de listagem de folhas
+        
+    except Exception as e:
+        messages.error(request, f"Erro ao excluir a folha de pagamento: {str(e)}")
+        return redirect('folha_detail', id=id)
 # --- API ---
 def get_funcionario(request, id):
     funcionario = get_object_or_404(Funcionario, id=id)
