@@ -447,7 +447,7 @@ def evento_create(request):
             
             # ✉️ Alerta de Sucesso
             messages.success(request, f"Evento '{nome}' criado com sucesso!")
-            return redirect('eventos_view') # Redireciona para o nome correto da rota
+            return redirect('eventos_list') # Redireciona para o nome correto da rota
             
         except Exception as e:
             messages.error(request, f"Erro ao criar evento: {str(e)}")
@@ -473,11 +473,11 @@ def evento_update(request, id):
             
             # ✉️ Alerta de Sucesso
             messages.success(request, f"Evento '{evento.nome}' atualizado com sucesso!")
-            return redirect('eventos_view')
+            return redirect('eventos_list')
             
         except Exception as e:
             messages.error(request, f"Erro ao atualizar evento: {str(e)}")
-            return redirect('eventos_view')
+            return redirect('eventos_list')
 
     return render(request, 'core/evento/form.html', {'evento': evento})
 
@@ -496,7 +496,7 @@ def evento_delete(request, id):
     except Exception as e:
         messages.error(request, f"Não foi possível excluir o evento: {str(e)}")
         
-    return redirect('eventos_view')
+    return redirect('eventos_list')
 
 
 # --- FALTAS ---
