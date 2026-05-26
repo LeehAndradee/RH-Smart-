@@ -418,6 +418,7 @@ def departamento_delete(request, id):
 
 
 # --- EVENTOS ---
+# --- EVENTOS ---
 @user_passes_test(eh_master, login_url='dashboard_view')
 @login_required
 def eventos_view(request):
@@ -434,7 +435,6 @@ def evento_create(request):
             tipo = request.POST.get('tipo')
             valor = request.POST.get('valor_fixo') 
 
-            # Validação básica
             if not nome or not tipo:
                 messages.error(request, "Preencha os campos obrigatórios (Nome e Tipo).")
                 return redirect('evento_create')
@@ -445,9 +445,8 @@ def evento_create(request):
                 valor_fixo=valor if valor else None, 
             )
             
-            # ✉️ Alerta de Sucesso
             messages.success(request, f"Evento '{nome}' criado com sucesso!")
-            return redirect('eventos_list') # Redireciona para o nome correto da rota
+            return redirect('eventos_list') # 🎯 Alinhado com o name do seu urls.py
             
         except Exception as e:
             messages.error(request, f"Erro ao criar evento: {str(e)}")
@@ -471,13 +470,12 @@ def evento_update(request, id):
             
             evento.save()
             
-            # ✉️ Alerta de Sucesso
             messages.success(request, f"Evento '{evento.nome}' atualizado com sucesso!")
-            return redirect('eventos_list')
+            return redirect('eventos_list') # 🎯 Alinhado com o name do seu urls.py
             
         except Exception as e:
             messages.error(request, f"Erro ao atualizar evento: {str(e)}")
-            return redirect('eventos_list')
+            return redirect('eventos_list') # 🎯 Alinhado com o name do seu urls.py
 
     return render(request, 'core/evento/form.html', {'evento': evento})
 
@@ -490,13 +488,12 @@ def evento_delete(request, id):
         nome_evento = evento.nome
         evento.delete()
         
-        # ✉️ Alerta de Sucesso na exclusão
         messages.success(request, f"Evento '{nome_evento}' excluído permanentemente!")
         
     except Exception as e:
         messages.error(request, f"Não foi possível excluir o evento: {str(e)}")
         
-    return redirect('eventos_list')
+    return redirect('eventos_list') # 🎯 Alinhado com o name do seu urls.py
 
 
 # --- FALTAS ---
